@@ -59,3 +59,58 @@ body{background:linear-gradient(180deg,#03162f 0 30%,#eef4ff 30% 100%)}
   .overview-first .overview-card{min-height:58px}
   .compact-login-stack .workspace-card{min-height:96px}
 }
+
+/* v1.3.1 — fit-first mobile home refinement */
+@media(max-width:560px){
+  body{background:linear-gradient(180deg,#03162f 0 27%,#eef4ff 27% 100%)}
+  .premium-hero{min-height:88px;padding:10px 14px 14px;border-radius:0 0 24px 24px}
+  .brand-row{gap:10px}
+  .brand-app-icon{width:46px;height:46px;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.22)}
+  .brand-title{font-size:28px;letter-spacing:-1.2px}
+  .brand-subtitle{margin-top:4px;font-size:8px;letter-spacing:.65px}
+  .install-mini{padding:5px 7px;font-size:8px}
+
+  .compact-home{padding:7px 9px 58px}
+  .overview-first{margin:0 0 7px}
+  .overview-first h3{margin:0 0 5px;font-size:10px;letter-spacing:.35px}
+  .overview-first .overview-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  .overview-first .overview-card{min-height:61px;border-radius:11px;padding:7px 6px;text-align:left}
+  .overview-first .overview-card b{font-size:19px}
+  .overview-first .overview-card span{margin-top:4px;font-size:7.7px;line-height:1.05;max-width:58px}
+  .overview-first .overview-card i{right:6px;top:19px;font-size:16px;opacity:.95}
+
+  .compact-login-stack{padding:7px;border-radius:20px;gap:6px}
+  .compact-login-stack .workspace-card{min-height:84px;border-radius:16px;padding:8px 10px;grid-template-columns:44px 1fr;gap:9px}
+  .compact-login-stack .workspace-icon{width:42px;height:42px;border-radius:13px;font-size:24px}
+  .compact-login-stack .premium-cricket-mark .batter{font-size:25px}
+  .compact-login-stack .mini-ball{width:9px;height:9px;right:5px;bottom:8px}
+  .compact-login-stack .admin-shield{font-size:24px}
+  .compact-login-stack .workspace-body h2{font-size:14px;margin:0 0 2px;line-height:1.05}
+  .compact-login-stack .workspace-body p{font-size:8.8px;line-height:1.18;margin:0 0 4px;max-width:260px}
+  .compact-login-stack .workspace-login{min-width:70px;padding:5px 9px;border-radius:7px;font-size:8.8px}
+
+  .compact-home .secure-strip{margin-top:6px;padding:6px 8px;border-radius:12px;gap:7px}
+  .compact-home .secure-strip>span{font-size:17px}
+  .compact-home .secure-strip strong{font-size:8.8px}
+  .compact-home .secure-strip small{font-size:7.5px;margin-top:1px}
+  .bottom-nav{height:54px}
+  .bottom-nav button{font-size:17px;gap:1px}
+  .bottom-nav button span{font-size:8.5px}
+}
+@media(max-width:380px){
+  .brand-title{font-size:25px}
+  .brand-app-icon{width:42px;height:42px}
+  .overview-first .overview-card span{font-size:7px}
+  .compact-login-stack .workspace-card{grid-template-columns:40px 1fr;min-height:80px}
+  .compact-login-stack .workspace-icon{width:38px;height:38px}
+  .compact-login-stack .workspace-body h2{font-size:13px}
+  .compact-login-stack .workspace-body p{font-size:8.2px}
+}
+@media(max-height:700px) and (max-width:560px){
+  .premium-hero{min-height:78px;padding-top:8px;padding-bottom:11px}
+  .brand-app-icon{width:40px;height:40px}.brand-title{font-size:24px}.brand-subtitle{font-size:7.3px}
+  .compact-home{padding-top:5px}
+  .overview-first .overview-card{min-height:55px}
+  .compact-login-stack .workspace-card{min-height:76px}
+  .compact-home .secure-strip{padding:5px 7px}
+}

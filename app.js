@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getFirestore, doc, getDoc, collection, getCountFromServer } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='1.3.0';
+const VERSION='1.3.1';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);

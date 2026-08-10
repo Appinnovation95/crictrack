@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getFirestore, doc, getDoc, collection, getCountFromServer } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -34,10 +34,7 @@ function header(sub='LIVE SCORES. REAL PASSION.'){
   return `<header class="hero premium-hero">
     <div class="stadium-glow"></div>
     <div class="brand-row premium-brand">
-      <div class="brand-logo-wrap">
-        <div class="brand-bat">🏏</div>
-        <span class="brand-ball"></span>
-      </div>
+      <img class="brand-app-icon" src="./icon-192.png" alt="CricTrack" />
       <div>
         <h1 class="brand-title"><span>Cric</span><em>Track</em></h1>
         <p class="brand-subtitle">${sub}</p>
@@ -46,7 +43,6 @@ function header(sub='LIVE SCORES. REAL PASSION.'){
     </div>
   </header>`;
 }
-
 function shell(content,sub){
   root.innerHTML=`<div class="app-shell">${header(sub)}${content}<footer class="footer">© 2026 CricTrack • v${VERSION}</footer></div>`;
   document.querySelectorAll('[data-install]').forEach(b=>b.onclick=installPwa);
@@ -56,37 +52,34 @@ function home(){
   shell(`<main class="content premium-home">
     <section class="home-card-stack" aria-label="CricTrack access options">
       <button class="workspace-card team-card" data-login="team">
-        <div class="workspace-icon cricket-icon">🏏</div>
-        <div class="workspace-body">
-          <h2>CRICKET TEAM</h2>
-          <p>Manage your team, players, matches and statistics</p>
-          <span class="workspace-login">LOGIN</span>
-        </div>
+        <div class="workspace-icon premium-cricket-mark"><span class="batter">🏏</span><span class="mini-ball"></span></div>
+        <div class="workspace-body"><h2>CRICKET TEAM</h2><p>Manage your team, players, matches and statistics</p><span class="workspace-login">LOGIN</span></div>
       </button>
       <button class="workspace-card tournament-card" data-login="tournament">
-        <div class="workspace-icon">🏆</div>
-        <div class="workspace-body">
-          <h2>TOURNAMENTS</h2>
-          <p>Organize tournaments, fixtures, live scores and more</p>
-          <span class="workspace-login red-text">LOGIN</span>
-        </div>
+        <div class="workspace-icon trophy-mark">🏆</div>
+        <div class="workspace-body"><h2>TOURNAMENTS</h2><p>Organize tournaments, fixtures, live scores and more</p><span class="workspace-login red-text">LOGIN</span></div>
       </button>
       <button class="workspace-card admin-card" data-login="superadmin">
-        <div class="workspace-icon shield-icon">♜</div>
-        <div class="workspace-body">
-          <h2>SUPER ADMIN</h2>
-          <p>System control, manage teams, tournaments and users</p>
-          <span class="workspace-login red-text">LOGIN</span>
-        </div>
+        <div class="workspace-icon admin-shield">♛</div>
+        <div class="workspace-body"><h2>SUPER ADMIN</h2><p>System control, manage teams, tournaments and users</p><span class="workspace-login">LOGIN</span></div>
       </button>
     </section>
-    <p class="home-security">🔒 Secure • Fast • Reliable</p>
+    <section class="platform-overview">
+      <h3>PLATFORM OVERVIEW</h3>
+      <div class="overview-grid">
+        <div class="overview-card blue"><b>0</b><span>Cricket Teams</span><i>👥</i></div>
+        <div class="overview-card red"><b>0</b><span>Tournaments</span><i>🏆</i></div>
+        <div class="overview-card green"><b>0</b><span>Live Matches</span><i>📡</i></div>
+        <div class="overview-card amber"><b>0</b><span>System Alerts</span><i>🔔</i></div>
+      </div>
+    </section>
+    <div class="secure-strip"><span>🛡️</span><div><strong>Firebase secure connection active</strong><small>Secure • Fast • Reliable</small></div></div>
     <button class="install-wide" data-install hidden>⬇ Install CricTrack App</button>
-  </main>`);
+  </main>
+  <nav class="bottom-nav" aria-label="Main navigation"><button class="active">⌂<span>Home</span></button><button>◉<span>Live</span></button><button>♙<span>Teams</span></button><button>♜<span>Tournaments</span></button><button>•••<span>More</span></button></nav>`);
   document.querySelectorAll('[data-login]').forEach(b=>b.onclick=()=>loginPage(b.dataset.login));
   document.querySelectorAll('[data-install]').forEach(b=>b.onclick=installPwa);
 }
-
 function loginPage(role){
   if(role!=='superadmin'){
     const isTeam=role==='team';

@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getFirestore, doc, getDoc, collection, getCountFromServer } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -49,8 +49,17 @@ function shell(content,sub){
 }
 
 function home(){
-  shell(`<main class="content premium-home">
-    <section class="home-card-stack" aria-label="CricTrack access options">
+  shell(`<main class="content premium-home compact-home">
+    <section class="platform-overview overview-first">
+      <h3>PLATFORM OVERVIEW</h3>
+      <div class="overview-grid">
+        <div class="overview-card blue"><b>0</b><span>Cricket Teams</span><i>👥</i></div>
+        <div class="overview-card red"><b>0</b><span>Tournaments</span><i>🏆</i></div>
+        <div class="overview-card green"><b>0</b><span>Live Matches</span><i>📡</i></div>
+        <div class="overview-card amber"><b>0</b><span>System Alerts</span><i>🔔</i></div>
+      </div>
+    </section>
+    <section class="home-card-stack compact-login-stack" aria-label="CricTrack access options">
       <button class="workspace-card team-card" data-login="team">
         <div class="workspace-icon premium-cricket-mark"><span class="batter">🏏</span><span class="mini-ball"></span></div>
         <div class="workspace-body"><h2>CRICKET TEAM</h2><p>Manage your team, players, matches and statistics</p><span class="workspace-login">LOGIN</span></div>
@@ -63,15 +72,6 @@ function home(){
         <div class="workspace-icon admin-shield">♛</div>
         <div class="workspace-body"><h2>SUPER ADMIN</h2><p>System control, manage teams, tournaments and users</p><span class="workspace-login">LOGIN</span></div>
       </button>
-    </section>
-    <section class="platform-overview">
-      <h3>PLATFORM OVERVIEW</h3>
-      <div class="overview-grid">
-        <div class="overview-card blue"><b>0</b><span>Cricket Teams</span><i>👥</i></div>
-        <div class="overview-card red"><b>0</b><span>Tournaments</span><i>🏆</i></div>
-        <div class="overview-card green"><b>0</b><span>Live Matches</span><i>📡</i></div>
-        <div class="overview-card amber"><b>0</b><span>System Alerts</span><i>🔔</i></div>
-      </div>
     </section>
     <div class="secure-strip"><span>🛡️</span><div><strong>Firebase secure connection active</strong><small>Secure • Fast • Reliable</small></div></div>
     <button class="install-wide" data-install hidden>⬇ Install CricTrack App</button>

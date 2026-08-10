@@ -20,3 +20,42 @@ body{background:linear-gradient(180deg,#03162f 0 30%,#eef4ff 30% 100%)}
 .footer{display:none}
 @media(max-width:560px){.brand-app-icon{width:70px;height:70px}.brand-title{font-size:37px}.workspace-card{grid-template-columns:78px 1fr;min-height:164px;padding:18px}.workspace-icon{width:72px;height:72px;font-size:42px}.workspace-body h2{font-size:19px}.workspace-body p{font-size:12.5px}}
 @media(max-width:380px){.workspace-card{grid-template-columns:64px 1fr}.workspace-icon{width:60px;height:60px}.premium-cricket-mark .batter{font-size:40px}.workspace-body h2{font-size:17px}.workspace-body p{font-size:11.5px}.brand-title{font-size:33px}}
+
+
+/* v1.3.0 — overview-first compact mobile home */
+.compact-home{padding-top:10px;padding-bottom:76px}
+.overview-first{margin-top:0;margin-bottom:10px}
+.overview-first h3{margin-bottom:7px;font-size:12px}
+.overview-first .overview-grid{gap:7px}
+.overview-first .overview-card{min-height:64px;border-radius:14px;padding:9px 11px}
+.overview-first .overview-card b{font-size:23px}
+.overview-first .overview-card span{margin-top:4px;font-size:9.5px}
+.overview-first .overview-card i{right:10px;top:17px;font-size:20px}
+.compact-login-stack{padding:9px;border-radius:24px;gap:8px}
+.compact-login-stack .workspace-card{min-height:105px;border-radius:19px;padding:11px 14px;grid-template-columns:58px 1fr;gap:12px}
+.compact-login-stack .workspace-icon{width:54px;height:54px;border-radius:17px;font-size:31px}
+.compact-login-stack .premium-cricket-mark .batter{font-size:32px}
+.compact-login-stack .mini-ball{width:12px;height:12px;right:7px;bottom:11px}
+.compact-login-stack .admin-shield{font-size:31px}
+.compact-login-stack .workspace-body h2{font-size:16px;margin:0 0 3px}
+.compact-login-stack .workspace-body p{font-size:10.5px;line-height:1.25;margin:0 0 6px}
+.compact-login-stack .workspace-login{min-width:82px;padding:6px 12px;border-radius:8px;font-size:10px}
+.compact-home .secure-strip{margin-top:9px;padding:8px;border-radius:14px}
+.compact-home .secure-strip>span{font-size:21px}
+.compact-home .secure-strip strong{font-size:10px}
+.compact-home .secure-strip small{font-size:8.5px}
+@media(max-width:560px){
+  .premium-hero{min-height:112px;padding:16px 16px 22px;border-radius:0 0 27px 27px}
+  .brand-app-icon{width:58px;height:58px;border-radius:18px}
+  .brand-title{font-size:32px}
+  .brand-subtitle{margin-top:6px;font-size:9.5px}
+  .compact-home{padding-left:12px;padding-right:12px}
+  .bottom-nav{height:62px}
+}
+@media(max-height:760px) and (max-width:560px){
+  .premium-hero{min-height:98px;padding-top:12px;padding-bottom:17px}
+  .brand-app-icon{width:52px;height:52px}
+  .brand-title{font-size:29px}
+  .overview-first .overview-card{min-height:58px}
+  .compact-login-stack .workspace-card{min-height:96px}
+}

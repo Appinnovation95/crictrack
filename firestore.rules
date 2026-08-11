@@ -110,11 +110,42 @@ service cloud.firestore {
           && request.resource.data.status == resource.data.status
           && request.resource.data.subscriptionStatus == resource.data.subscriptionStatus
           && request.resource.data.trialMatchesAllowed == resource.data.trialMatchesAllowed
-          && request.resource.data.trialMatchesUsed == resource.data.trialMatchesUsed
           && request.resource.data.planId == resource.data.planId
+          && (
+            request.resource.data.trialMatchesUsed == resource.data.trialMatchesUsed
+            || (
+              resource.data.subscriptionStatus == 'trial'
+              && resource.data.trialMatchesUsed < resource.data.trialMatchesAllowed
+              && request.resource.data.trialMatchesUsed == resource.data.trialMatchesUsed + 1
+            )
+          )
         );
 
       allow delete: if isSuperAdmin();
+
+      // v2.8.0 Team Matches
+      match /matches/{matchId} {
+        allow get, list: if isSuperAdmin() || isTeamOwner(teamId);
+        allow create: if isSuperAdmin() || (
+          isTeamOwner(teamId)
+          && request.resource.data.ownerTeamId == teamId
+          && request.resource.data.teamAId == teamId
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.status == 'live'
+          && request.resource.data.overs is int
+          && request.resource.data.overs >= 1
+          && request.resource.data.overs <= 100
+          && request.resource.data.playingXI is list
+          && request.resource.data.playingXI.size() == 11
+        );
+        allow update: if isSuperAdmin() || (
+          isTeamOwner(teamId)
+          && request.resource.data.ownerTeamId == resource.data.ownerTeamId
+          && request.resource.data.teamAId == resource.data.teamAId
+          && request.resource.data.createdBy == resource.data.createdBy
+        );
+        allow delete: if isSuperAdmin();
+      }
 
       // v2.7.0 Players & Squad
       match /players/{playerId} {

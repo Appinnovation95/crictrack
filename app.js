@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='2.7.0';
+const VERSION='2.8.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -236,7 +236,7 @@ function teamDashboard(user,team){
       <div class="ct-dash-secure ct-clean-secure"><span><strong>Team workspace securely connected</strong><small>Real-time • Cloud synchronized</small></span></div>
     </main><footer class="footer">© 2026 CricTrack • v${VERSION}</footer></div>`;
   document.getElementById('teamLogout').onclick=async()=>{await signOut(auth);home();};
-  document.getElementById('teamCreateMatch').onclick=()=>alert(trialAvailable?'Match access available. Create Match module is the next coding phase.':'Subscription is required to start another match.');
+  document.getElementById('teamCreateMatch').onclick=()=>teamCreateMatchPage(user,team);
   document.getElementById('teamProfile').onclick=()=>teamProfilePage(user,team);
   document.getElementById('teamSquad').onclick=()=>teamSquadPage(user,team);
   ['teamLiveScoring','teamMatches','teamStatistics','teamOpponents','teamReports','teamSettings'].forEach(id=>{document.getElementById(id).onclick=()=>alert(document.getElementById(id).querySelector('strong').textContent+' module is being connected in the next phase.');});
@@ -346,6 +346,53 @@ async function teamSquadPage(user,team){
   document.querySelectorAll('[data-squad-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.squadFilter;document.querySelectorAll('[data-squad-filter]').forEach(x=>x.classList.toggle('active',x===b));render();});
   document.getElementById('playerForm').onsubmit=async e=>{e.preventDefault();const btn=document.getElementById('savePlayer'),err=document.getElementById('playerError');err.style.display='none';try{btn.disabled=true;btn.textContent='SAVING…';const name=document.getElementById('playerName').value.trim();if(!name)throw new Error('Player Name is required.');const data={name,jerseyNo:document.getElementById('playerJersey').value.trim(),role:document.getElementById('playerRole').value,battingStyle:document.getElementById('playerBat').value,bowlingStyle:document.getElementById('playerBowl').value,isCaptain:document.getElementById('playerCaptain').checked,isViceCaptain:document.getElementById('playerVC').checked,isWicketKeeper:document.getElementById('playerWK').checked,active:true,playingXI:false,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};const ref=await addDoc(collection(db,'teams',team.teamId,'players'),data);players.push({id:ref.id,...data});players.sort((a,b)=>(Number(a.jerseyNo)||999)-(Number(b.jerseyNo)||999)||String(a.name).localeCompare(String(b.name)));document.getElementById('playerForm').reset();document.getElementById('playerFormWrap').hidden=true;render();}catch(ex){err.textContent=friendlyError(ex);err.style.display='block';}finally{btn.disabled=false;btn.textContent='SAVE PLAYER';}};
   await load();
+}
+
+
+async function teamCreateMatchPage(user,team){
+  const trialAvailable=Number(team.trialMatchesUsed||0)<Number(team.trialMatchesAllowed||1) || team.subscriptionStatus==='active';
+  let players=[];
+  try{const snap=await getDocs(collection(db,'teams',team.teamId,'players'));players=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.active&&p.playingXI);}catch{}
+  const xi=players.map(p=>`<span class="ct-xi-chip">${esc(p.name)}${p.jerseyNo?' #'+esc(p.jerseyNo):''}</span>`).join('');
+  teamModuleShell(team,'CREATE MATCH','Set the opponent, venue, overs, Playing XI and toss before starting the match.',`
+    <section class="ct-match-form-card">
+      <div class="ct-match-access ${trialAvailable?'ok':'locked'}"><strong>${trialAvailable?'MATCH ACCESS READY':'SUBSCRIPTION REQUIRED'}</strong><span>${trialAvailable?(team.subscriptionStatus==='active'?'Active subscription':'Your one free team match is available'):'Your free match has already been used. Activate a subscription to start another match.'}</span></div>
+      <form id="createMatchForm">
+        <div class="ct-match-grid">
+          <label><span>Opponent Team *</span><input id="matchOpponent" maxlength="80" required placeholder="Opponent team name"></label>
+          <label><span>Venue *</span><input id="matchVenue" maxlength="100" required placeholder="Ground / venue"></label>
+          <label><span>Match Date *</span><input id="matchDate" type="date" required></label>
+          <label><span>Start Time *</span><input id="matchTime" type="time" required></label>
+          <label><span>Match Type *</span><select id="matchType"><option>Limited Overs</option><option>T20</option><option>T10</option><option>ODI</option><option>Practice Match</option></select></label>
+          <label><span>Overs *</span><input id="matchOvers" type="number" min="1" max="100" value="20" required></label>
+        </div>
+        <div class="ct-match-section"><h3>PLAYING XI <b>${players.length}/11</b></h3><div class="ct-xi-list">${xi||'<span class="ct-xi-empty">No Playing XI selected. Go to Players & Squad first.</span>'}</div></div>
+        <div class="ct-match-section"><h3>TOSS</h3><div class="ct-match-grid">
+          <label><span>Toss Winner</span><select id="tossWinner"><option value="">Not decided yet</option><option value="self">${esc(team.name||team.teamId)}</option><option value="opponent">Opponent</option></select></label>
+          <label><span>Decision</span><select id="tossDecision"><option value="">Select after toss</option><option value="bat">Bat</option><option value="bowl">Bowl</option></select></label>
+        </div></div>
+        <label class="ct-match-notes"><span>Match Notes</span><textarea id="matchNotes" maxlength="300" placeholder="Optional match rules or notes"></textarea></label>
+        <div id="matchError" class="error"></div><div id="matchSuccess" class="success-box"></div>
+        <button class="ct-start-match" id="startMatchBtn" ${trialAvailable?'':'disabled'}>START MATCH</button>
+      </form>
+    </section>`);
+  const today=new Date();document.getElementById('matchDate').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  document.getElementById('createMatchForm').onsubmit=async e=>{
+    e.preventDefault();const err=document.getElementById('matchError'),ok=document.getElementById('matchSuccess'),btn=document.getElementById('startMatchBtn');err.style.display='none';ok.style.display='none';
+    try{
+      if(!trialAvailable)throw new Error('Subscription is required to start this match.');
+      if(players.length!==11)throw new Error(`Select exactly 11 Playing XI players first. Current selection: ${players.length}/11.`);
+      const opponent=document.getElementById('matchOpponent').value.trim(),venue=document.getElementById('matchVenue').value.trim(),date=document.getElementById('matchDate').value,time=document.getElementById('matchTime').value,overs=Number(document.getElementById('matchOvers').value);
+      if(!opponent||!venue||!date||!time)throw new Error('Complete all required match details.');if(!Number.isInteger(overs)||overs<1||overs>100)throw new Error('Overs must be between 1 and 100.');
+      btn.disabled=true;btn.textContent='STARTING MATCH…';
+      const matchRef=doc(collection(db,'teams',team.teamId,'matches'));const batch=writeBatch(db);
+      batch.set(matchRef,{matchId:matchRef.id,ownerTeamId:team.teamId,teamAId:team.teamId,teamAName:team.name||team.teamId,teamBName:opponent,venue,date,startTime:time,matchType:document.getElementById('matchType').value,overs,status:'live',innings:1,tossWinner:document.getElementById('tossWinner').value,tossDecision:document.getElementById('tossDecision').value,notes:document.getElementById('matchNotes').value.trim(),playingXI:players.map(p=>({id:p.id,name:p.name,jerseyNo:p.jerseyNo||'',role:p.role||''})),createdBy:auth.currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+      if(team.subscriptionStatus!=='active')batch.update(doc(db,'teams',team.teamId),{trialMatchesUsed:Number(team.trialMatchesUsed||0)+1});
+      await batch.commit();
+      team.trialMatchesUsed=team.subscriptionStatus==='active'?Number(team.trialMatchesUsed||0):Number(team.trialMatchesUsed||0)+1;
+      ok.innerHTML='<strong>Match started successfully</strong><br>Live match workspace is ready for the scoring module.';ok.style.display='block';btn.textContent='MATCH STARTED';
+    }catch(ex){err.textContent=friendlyError(ex);err.style.display='block';btn.disabled=!trialAvailable;btn.textContent='START MATCH';}
+  };
 }
 
 function tournamentDashboard(user,t){shell(`<main class="dashboard ct-dashboard-shell ct-tournament-dashboard-v240"><div class="ct-dash-hero tournament"><div><div class="ct-dash-role">🏆 TOURNAMENT WORKSPACE</div><h2>${esc(t.name||t.tournamentId)}</h2><p>Tournament ID: ${esc(t.tournamentId||'')} • Setup workspace</p></div><button class="ct-dash-logout" id="tourLogout">Logout</button></div><div class="ct-dash-stats tournament-stats"><div><b>✓</b><span>Registered</span></div><div><b>⚙</b><span>Setup Ready</span></div><div><b>📅</b><span>Fixtures</span></div><div><b>🔒</b><span>Secure</span></div></div><div class="ct-dash-title"><strong>TOURNAMENT DASHBOARD</strong><span>Organize • Monitor • Publish</span></div><div class="ct-dash-grid tournament-grid-v240"><button class="ct-dash-card purple"><div>👥</div><strong>TEAMS</strong><small>Add, invite & manage teams</small></button><button class="ct-dash-card purple"><div>🧍</div><strong>PLAYERS</strong><small>Registration & approvals</small></button><button class="ct-dash-card green"><div>📅</div><strong>FIXTURES</strong><small>Create & schedule fixtures</small></button><button class="ct-dash-card blue" id="tourStartMatch"><div>📡</div><strong>LIVE MATCHES</strong><small>Start or monitor matches</small></button><button class="ct-dash-card blue"><div>✅</div><strong>RESULTS</strong><small>Results & full scorecards</small></button><button class="ct-dash-card orange"><div>📊</div><strong>POINTS TABLE</strong><small>Standings & qualification</small></button><button class="ct-dash-card orange"><div>🏆</div><strong>KNOCKOUTS</strong><small>Playoffs, semis & final</small></button><button class="ct-dash-card green"><div>📈</div><strong>STATISTICS</strong><small>Players, teams & records</small></button><button class="ct-dash-card red"><div>🥇</div><strong>AWARDS</strong><small>Awards & tournament honours</small></button><button class="ct-dash-card blue"><div>🏟️</div><strong>VENUES</strong><small>Grounds & availability</small></button><button class="ct-dash-card purple"><div>🔔</div><strong>ANNOUNCEMENTS</strong><small>Teams, officials & public</small></button><button class="ct-dash-card red"><div>⚙️</div><strong>SETTINGS</strong><small>Rules, branding & security</small></button></div><div class="ct-dash-secure">🛡️ <span><strong>Tournament workspace securely connected</strong><small>Setup data is saved in real time</small></span></div></main>`,'TOURNAMENT • SETUP WORKSPACE');document.getElementById('tourLogout').onclick=async()=>{await signOut(auth);home();};document.getElementById('tourStartMatch').onclick=()=>alert(t.canStartMatch?'Match start access active. Live Match module is the next coding phase.':'Subscription is required when you start tournament matches. Your setup data remains safe.');}

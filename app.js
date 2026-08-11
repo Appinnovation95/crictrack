@@ -363,13 +363,14 @@ async function teamSquadPage(user,team){
 
 
 async function teamCreateMatchPage(user,team){
-  const trialAvailable=Number(team.trialMatchesUsed||0)<Number(team.trialMatchesAllowed||1) || team.subscriptionStatus==='active';
+  // Development/testing mode: unlimited team matches until subscriptions are enabled for production.
+  const trialAvailable=true;
   let players=[];
   try{const snap=await getDocs(collection(db,'teams',team.teamId,'players'));players=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.active&&p.playingXI);}catch{}
   const xi=players.map(p=>`<span class="ct-xi-chip">${esc(p.name)}${p.jerseyNo?' #'+esc(p.jerseyNo):''}</span>`).join('');
   teamModuleShell(team,'CREATE MATCH','Set the opponent, venue, overs, Playing XI and toss before starting the match.',`
     <section class="ct-match-form-card">
-      <div class="ct-match-access ${trialAvailable?'ok':'locked'}"><strong>${trialAvailable?'MATCH ACCESS READY':'SUBSCRIPTION REQUIRED'}</strong><span>${trialAvailable?(team.subscriptionStatus==='active'?'Active subscription':'Your one free team match is available'):'Your free match has already been used. Activate a subscription to start another match.'}</span></div>
+      <div class="ct-match-access ok"><strong>UNLIMITED TEST MATCHES ACTIVE</strong><span>Development mode • Create and score any number of matches. Subscription limits will be enabled only after CricTrack is fully tested.</span></div>
       <form id="createMatchForm">
         <div class="ct-match-grid">
           <label><span>Opponent Team *</span><input id="matchOpponent" maxlength="80" required placeholder="Opponent team name"></label>
@@ -393,18 +394,15 @@ async function teamCreateMatchPage(user,team){
   document.getElementById('createMatchForm').onsubmit=async e=>{
     e.preventDefault();const err=document.getElementById('matchError'),ok=document.getElementById('matchSuccess'),btn=document.getElementById('startMatchBtn');err.style.display='none';ok.style.display='none';
     try{
-      if(!trialAvailable)throw new Error('Subscription is required to start this match.');
       if(players.length!==11)throw new Error(`Select exactly 11 Playing XI players first. Current selection: ${players.length}/11.`);
       const opponent=document.getElementById('matchOpponent').value.trim(),venue=document.getElementById('matchVenue').value.trim(),date=document.getElementById('matchDate').value,time=document.getElementById('matchTime').value,overs=Number(document.getElementById('matchOvers').value);
       if(!opponent||!venue||!date||!time)throw new Error('Complete all required match details.');if(!Number.isInteger(overs)||overs<1||overs>100)throw new Error('Overs must be between 1 and 100.');
       btn.disabled=true;btn.textContent='STARTING MATCH…';
       const matchRef=doc(collection(db,'teams',team.teamId,'matches'));const batch=writeBatch(db);
       batch.set(matchRef,{matchId:matchRef.id,ownerTeamId:team.teamId,teamAId:team.teamId,teamAName:team.name||team.teamId,teamBName:opponent,venue,date,startTime:time,matchType:document.getElementById('matchType').value,overs,status:'live',innings:1,tossWinner:document.getElementById('tossWinner').value,tossDecision:document.getElementById('tossDecision').value,notes:document.getElementById('matchNotes').value.trim(),playingXI:players.map(p=>({id:p.id,name:p.name,jerseyNo:p.jerseyNo||'',role:p.role||''})),createdBy:auth.currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
-      if(team.subscriptionStatus!=='active')batch.update(doc(db,'teams',team.teamId),{trialMatchesUsed:Number(team.trialMatchesUsed||0)+1});
       await batch.commit();
-      team.trialMatchesUsed=team.subscriptionStatus==='active'?Number(team.trialMatchesUsed||0):Number(team.trialMatchesUsed||0)+1;
       ok.innerHTML='<strong>Match started successfully</strong><br>Opening Live Scoring…';ok.style.display='block';btn.textContent='MATCH STARTED';setTimeout(()=>teamLiveScoringPage(user,team,matchRef.id),500);
-    }catch(ex){err.textContent=friendlyError(ex);err.style.display='block';btn.disabled=!trialAvailable;btn.textContent='START MATCH';}
+    }catch(ex){err.textContent=friendlyError(ex);err.style.display='block';btn.disabled=false;btn.textContent='START MATCH';}
   };
 }
 
@@ -565,8 +563,8 @@ async function teamLiveScoringPage(user,team,preferredMatchId=''){
   document.querySelectorAll('[data-extra]').forEach(b=>b.onclick=async()=>{
     if(!ready())return;const type=b.dataset.extra;let selected=null;
     if(type==='wd')selected=await choiceModal('Wide Runs',[1,2,3,4,5].map(n=>({label:`${n} Wide${n>1?'s':''}`,value:{runs:n,label:`${n}Wd`}})),'Select total wide runs');
-    if(type==='b')selected=await choiceModal('Bye Runs',[1,2,3,4].map(n=>({label:`${n} Bye${n>1?'s':''}`,value:{runs:n,label:`${n}B`}})),'Legal delivery');
-    if(type==='lb')selected=await choiceModal('Leg Bye Runs',[1,2,3,4].map(n=>({label:`${n} Leg Bye${n>1?'s':''}`,value:{runs:n,label:`${n}Lb`}})),'Legal delivery');
+    if(type==='b')selected=await choiceModal('Bye Runs',[1,2,3,4,5,6].map(n=>({label:`${n} Bye${n>1?'s':''}`,value:{runs:n,label:`${n}B`}})),'Legal delivery');
+    if(type==='lb')selected=await choiceModal('Leg Bye Runs',[1,2,3,4,5,6].map(n=>({label:`${n} Leg Bye${n>1?'s':''}`,value:{runs:n,label:`${n}Lb`}})),'Legal delivery');
     if(type==='nb')selected=await choiceModal('No Ball',[{label:'1 No Ball',sub:'No bat runs',value:{runs:1,batRuns:0,label:'1Nb'}},{label:'No Ball + 1 Bat Run',value:{runs:2,batRuns:1,label:'Nb+1'}},{label:'No Ball + 2 Bat Runs',value:{runs:3,batRuns:2,label:'Nb+2'}},{label:'No Ball + 3 Bat Runs',value:{runs:4,batRuns:3,label:'Nb+3'}},{label:'No Ball + FOUR',value:{runs:5,batRuns:4,label:'Nb+4'}},{label:'No Ball + SIX',value:{runs:7,batRuns:6,label:'Nb+6'}}],'Illegal delivery • Next ball remains');
     if(!selected)return;const v=selected.value;undoStack.push(snapshot());const st=inn.batters[inn.strikerId],bw=inn.bowlers[inn.bowlerId];const runs=Number(v.runs||0),batRuns=Number(v.batRuns||0);inn.runs+=runs;const legal=type==='b'||type==='lb';
     if(type==='wd'){inn.extras.wd+=runs;bw.wides+=runs;bw.runs+=runs;}
@@ -583,7 +581,7 @@ async function teamLiveScoringPage(user,team,preferredMatchId=''){
     const type=wt.value;let outId=inn.strikerId,completedRuns=0,fielder='',dismissalBowler=inn.bowlerId;
     if(type==='Run Out'){
       const out=await choiceModal('Who is Run Out?',[{label:nameOf(inn.strikerId,rosterForBat()),value:inn.strikerId},{label:nameOf(inn.nonStrikerId,rosterForBat()),value:inn.nonStrikerId}],'Select dismissed batter');if(!out)return;outId=out.value;
-      const rr=await choiceModal('Completed Runs',[0,1,2,3].map(n=>({label:`${n} run${n===1?'':'s'} + wicket`,value:n})),'Runs completed before the wicket');if(!rr)return;completedRuns=rr.value;
+      const rr=await choiceModal('Completed Runs',[0,1,2,3,4,5,6].map(n=>({label:`${n} run${n===1?'':'s'} + wicket`,value:n})),'Runs completed before the wicket');if(!rr)return;completedRuns=rr.value;
       const fp=await choosePlayer('Run Out Fielder',rosterForBowl());if(fp)fielder=fp.label;
     }else if(type==='Caught'||type==='Stumped'){
       const fp=await choosePlayer(type==='Caught'?'Select Catcher':'Select Wicketkeeper',rosterForBowl());if(fp)fielder=fp.label;

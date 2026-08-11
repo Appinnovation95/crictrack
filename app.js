@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='3.1.0';
+const VERSION='3.4.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -242,7 +242,9 @@ function teamDashboard(user,team){
   document.getElementById('teamLiveScoring').onclick=()=>teamLiveScoringPage(user,team);
   document.getElementById('teamMatches').onclick=()=>teamMatchesPage(user,team);
   document.getElementById('teamStatistics').onclick=()=>teamStatisticsPage(user,team);
-  ['teamOpponents','teamReports','teamSettings'].forEach(id=>{document.getElementById(id).onclick=()=>alert(document.getElementById(id).querySelector('strong').textContent+' module is being connected in the next phase.');});
+  document.getElementById('teamOpponents').onclick=()=>teamOpponentsPage(user,team);
+  document.getElementById('teamReports').onclick=()=>teamReportsPage(user,team);
+  document.getElementById('teamSettings').onclick=()=>alert('TEAM SETTINGS module is next.');
 }
 
 
@@ -456,6 +458,33 @@ async function teamStatisticsPage(user,team){
       <section><h3>BATTING LEADERS</h3>${batLeaders.length?batLeaders.map((x,i)=>`<div class="ct-leader-row"><b>${i+1}</b><span><strong>${esc(x.name)}</strong><small>${x.runs} runs • HS ${x.high} • SR ${x.balls?((x.runs/x.balls)*100).toFixed(1):'0.0'} • 4s ${x.fours} • 6s ${x.sixes}</small></span></div>`).join(''):'<p class="ct-no-data">No completed batting data yet.</p>'}</section>
       <section><h3>BOWLING LEADERS</h3>${bowlLeaders.length?bowlLeaders.map((x,i)=>`<div class="ct-leader-row"><b>${i+1}</b><span><strong>${esc(x.name)}</strong><small>${x.wickets} wickets • Best ${x.bestW}/${x.bestR===9999?0:x.bestR} • Eco ${x.balls?((x.runs*6)/x.balls).toFixed(2):'0.00'} • WD ${x.wides} • NB ${x.noBalls}</small></span></div>`).join(''):'<p class="ct-no-data">No completed bowling data yet.</p>'}</section></div>`;
   }catch(ex){box.innerHTML=`<div class="error visible">${esc(friendlyError(ex))}</div>`;}
+}
+
+
+async function teamOpponentsPage(user,team){
+  teamModuleShell(team,'OPPONENTS','Head-to-head records calculated from completed matches.',`<div id="opponentBody" class="ct-opponents-page"><div class="loading-card">Building opponent records…</div></div>`);
+  const box=document.getElementById('opponentBody');
+  try{
+    const snap=await getDocs(collection(db,'teams',team.teamId,'matches'));const matches=snap.docs.map(d=>({id:d.id,...d.data()})).filter(m=>m.status==='completed');
+    const map={};
+    matches.forEach(m=>{const name=m.teamBName||'Opponent';const k=name.toLowerCase();const x=map[k]||(map[k]={name,played:0,wins:0,losses:0,ties:0,last:'',runsFor:0,runsAgainst:0});x.played++;x.last=m.date||x.last;const r=String(m.resultText||'');if(/tied/i.test(r))x.ties++;else if(r.toLowerCase().startsWith(String(team.name||team.teamId).toLowerCase()+' won'))x.wins++;else if(/ won by /i.test(r))x.losses++;(m.inningsData||[]).forEach(i=>{if(i.battingTeamId===team.teamId)x.runsFor+=Number(i.runs||0);else x.runsAgainst+=Number(i.runs||0);});});
+    const arr=Object.values(map).sort((a,b)=>b.played-a.played||b.wins-a.wins);
+    box.innerHTML=arr.length?arr.map(x=>`<article class="ct-opponent-card"><div><h3>${esc(x.name)}</h3><span>${x.played} matches • Last ${esc(x.last||'—')}</span></div><div class="ct-h2h-numbers"><b>${x.wins}<small>W</small></b><b>${x.losses}<small>L</small></b><b>${x.ties}<small>T</small></b></div><div class="ct-h2h-footer"><span>Runs ${x.runsFor}–${x.runsAgainst}</span><strong>${x.played?((x.wins/x.played)*100).toFixed(0):0}% win rate</strong></div></article>`).join(''):'<div class="empty-state"><strong>No head-to-head data yet</strong><span>Completed matches will automatically build opponent records.</span></div>';
+  }catch(ex){box.innerHTML=`<div class="error visible">${esc(friendlyError(ex))}</div>`;}
+}
+
+async function teamReportsPage(user,team){
+  teamModuleShell(team,'REPORTS','Export match history and open a print-ready team performance report.',`<section class="ct-report-hero"><strong>CRICTRACK TEAM REPORTS</strong><span>Match history • Results • Scores • Team performance</span></section><div id="reportSummary" class="ct-match-summary"></div><div class="ct-report-actions"><button id="downloadMatchesCsv">DOWNLOAD MATCH CSV</button><button id="printTeamReport">PRINT / SAVE PDF</button></div><div id="reportPreview" class="ct-report-preview"><div class="loading-card">Preparing report…</div></div>`);
+  const preview=document.getElementById('reportPreview');
+  try{
+    const snap=await getDocs(collection(db,'teams',team.teamId,'matches'));const matches=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));const done=matches.filter(m=>m.status==='completed');let wins=0,losses=0,ties=0;
+    done.forEach(m=>{const r=String(m.resultText||'');if(/tied/i.test(r))ties++;else if(r.toLowerCase().startsWith(String(team.name||team.teamId).toLowerCase()+' won'))wins++;else if(/ won by /i.test(r))losses++;});
+    document.getElementById('reportSummary').innerHTML=`<div><b>${matches.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${done.length?((wins/done.length)*100).toFixed(0):0}%</b><span>Win Rate</span></div>`;
+    const rows=matches.map(m=>{const inn=m.inningsData||[];const scores=inn.map(i=>`${i.battingTeamName||'Team'} ${i.runs||0}/${i.wickets||0} (${Math.floor(Number(i.legalBalls||0)/6)}.${Number(i.legalBalls||0)%6})`).join(' • ');return {date:m.date||'',opponent:m.teamBName||'',venue:m.venue||'',overs:m.overs||'',status:m.status||'',scores,result:m.resultText||''};});
+    preview.innerHTML=`<div class="ct-report-title"><h3>${esc(team.name||team.teamId)} — Match Report</h3><p>Completed ${done.length} • Wins ${wins} • Losses ${losses} • Ties ${ties}</p></div>${rows.length?rows.map(r=>`<article class="ct-report-row"><div><strong>${esc(team.name||team.teamId)} vs ${esc(r.opponent)}</strong><span>${esc(r.date)} • ${esc(r.venue)} • ${esc(r.overs)} overs</span><small>${esc(r.scores||'Score not available')}</small></div><b>${esc(r.result||String(r.status).toUpperCase())}</b></article>`).join(''):'<div class="empty-state"><strong>No matches to report</strong></div>'}`;
+    document.getElementById('downloadMatchesCsv').onclick=()=>{const q=v=>'"'+String(v??'').replaceAll('"','""')+'"';const csv=['Date,Opponent,Venue,Overs,Status,Scores,Result',...rows.map(r=>[r.date,r.opponent,r.venue,r.overs,r.status,r.scores,r.result].map(q).join(','))].join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`CricTrack_${String(team.teamId||'Team').replace(/[^a-z0-9_-]/gi,'_')}_Matches.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+    document.getElementById('printTeamReport').onclick=()=>window.print();
+  }catch(ex){preview.innerHTML=`<div class="error visible">${esc(friendlyError(ex))}</div>`;}
 }
 
 async function teamLiveScoringPage(user,team,preferredMatchId=''){

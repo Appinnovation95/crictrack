@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='2.1.0';
+const VERSION='2.1.1';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -60,15 +60,12 @@ function home(){
 
     <button class="ct-superadmin-bar" data-login="superadmin"><span>🛡️</span><div><strong>SUPER ADMIN LOGIN</strong><small>Secure platform control centre</small></div><b>LOGIN →</b></button>
 
-    <section class="ct-public-shortcuts"><button>📡<span>Live Scores</span></button><button>📊<span>Points Table</span></button><button>📅<span>Fixtures</span></button><button>🏅<span>Stats</span></button><button>📰<span>Updates</span></button></section>
     <div class="ct-home-secure">🛡️ <span><strong>Firebase secure connection active</strong><small>Secure • Fast • Reliable</small></span></div>
     <button class="install-wide" data-install hidden>⬇ Install CricTrack App</button>
-  </main>
-  <nav class="bottom-nav" aria-label="Main navigation"><button class="active">⌂<span>Home</span></button><button id="bottomLive">◉<span>Live</span></button><button>♙<span>Teams</span></button><button>♜<span>Tournaments</span></button><button>•••<span>More</span></button></nav>`);
+  </main>`);
   document.querySelectorAll('[data-login]').forEach(b=>b.onclick=()=>loginPage(b.dataset.login));
   document.querySelectorAll('[data-register]').forEach(b=>b.onclick=()=>registrationPage(b.dataset.register));
   document.getElementById('viewLive').onclick=()=>publicLivePage();
-  document.getElementById('bottomLive').onclick=()=>publicLivePage();
   document.querySelectorAll('[data-install]').forEach(b=>b.onclick=installPwa);
   loadPublicHomeData();
 }

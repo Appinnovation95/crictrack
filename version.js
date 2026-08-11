@@ -1,1 +1,1 @@
-export const CRICTRACK_VERSION = '2.6.0';
+window.CRICTRACK_VERSION = '2.7.0';

@@ -1,9 +1,9 @@
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='2.6.0';
+const VERSION='2.7.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -237,8 +237,117 @@ function teamDashboard(user,team){
     </main><footer class="footer">© 2026 CricTrack • v${VERSION}</footer></div>`;
   document.getElementById('teamLogout').onclick=async()=>{await signOut(auth);home();};
   document.getElementById('teamCreateMatch').onclick=()=>alert(trialAvailable?'Match access available. Create Match module is the next coding phase.':'Subscription is required to start another match.');
-  ['teamProfile','teamSquad','teamLiveScoring','teamMatches','teamStatistics','teamOpponents','teamReports','teamSettings'].forEach(id=>{document.getElementById(id).onclick=()=>alert(document.getElementById(id).querySelector('strong').textContent+' module is being connected in the next phase.');});
+  document.getElementById('teamProfile').onclick=()=>teamProfilePage(user,team);
+  document.getElementById('teamSquad').onclick=()=>teamSquadPage(user,team);
+  ['teamLiveScoring','teamMatches','teamStatistics','teamOpponents','teamReports','teamSettings'].forEach(id=>{document.getElementById(id).onclick=()=>alert(document.getElementById(id).querySelector('strong').textContent+' module is being connected in the next phase.');});
 }
+
+
+function teamModuleShell(team,title,subtitle,body){
+  const teamName=team.name||team.teamId||'TEAM';
+  root.innerHTML=`<div class="app-shell ct-team-module-app">
+    <header class="ct-team-module-head">
+      <button class="ct-module-back" id="moduleBack">← Dashboard</button>
+      <div class="ct-module-team"><img src="${esc(team.logoDataUrl||'./icon-192.png')}" alt="${esc(teamName)}"><div><strong>${esc(teamName)}</strong><span>Team ID: ${esc(team.teamId||'')}</span></div></div>
+    </header>
+    <main class="ct-team-module"><div class="ct-module-title"><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div>${body}</main>
+    <footer class="footer">© 2026 CricTrack • v${VERSION}</footer>
+  </div>`;
+  document.getElementById('moduleBack').onclick=()=>teamDashboard(auth.currentUser,team);
+}
+
+function fileToCompressedDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    if(!file){resolve('');return;}
+    if(!file.type.startsWith('image/')){reject(new Error('Please select an image file.'));return;}
+    if(file.size>5*1024*1024){reject(new Error('Logo image must be below 5 MB.'));return;}
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('Could not read logo image.'));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('Invalid image file.'));
+      img.onload=()=>{
+        const max=420,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        let q=.82,data=canvas.toDataURL('image/jpeg',q);
+        while(data.length>170000&&q>.45){q-=.08;data=canvas.toDataURL('image/jpeg',q);}
+        if(data.length>220000){reject(new Error('Logo is still too large. Please choose a smaller image.'));return;}
+        resolve(data);
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function teamProfilePage(user,team){
+  const logo=team.logoDataUrl||'./icon-192.png';
+  teamModuleShell(team,'TEAM PROFILE','Identity, branding and team contact details',`
+    <section class="ct-profile-hero-card"><img id="teamLogoPreview" src="${esc(logo)}" alt="Team logo"><div><h3>${esc(team.name||team.teamId)}</h3><p>${esc(team.city||'City not set')} • ${esc(team.homeGround||'Home ground not set')}</p><span>Permanent Team ID: ${esc(team.teamId||'')}</span></div></section>
+    <form id="teamProfileForm" class="ct-premium-form">
+      <div class="ct-form-section"><h3>TEAM IDENTITY</h3><div class="ct-form-grid">
+        <label class="wide">Team Logo<input id="profileLogo" type="file" accept="image/*"><small>JPG/PNG • automatically optimized</small></label>
+        <label>Team Name *<input id="profileName" required value="${esc(team.name||'')}"></label>
+        <label>Short Name<input id="profileShortName" maxlength="8" value="${esc(team.shortName||'')}"></label>
+        <label>City<input id="profileCity" value="${esc(team.city||'')}"></label>
+        <label>Established Year<input id="profileYear" inputmode="numeric" maxlength="4" value="${esc(team.establishedYear||'')}"></label>
+        <label class="wide">Team Tagline<input id="profileTagline" maxlength="60" value="${esc(team.tagline||'')}"></label>
+      </div></div>
+      <div class="ct-form-section"><h3>TEAM MANAGEMENT</h3><div class="ct-form-grid">
+        <label>Manager Name<input id="profileManager" value="${esc(team.managerName||'')}"></label>
+        <label>Mobile<input id="profileMobile" type="tel" value="${esc(team.mobile||'')}"></label>
+        <label>Captain<input id="profileCaptain" value="${esc(team.captainName||'')}"></label>
+        <label>Vice Captain<input id="profileViceCaptain" value="${esc(team.viceCaptainName||'')}"></label>
+        <label class="wide">Home Ground<input id="profileGround" value="${esc(team.homeGround||'')}"></label>
+      </div></div>
+      <div class="ct-form-section"><h3>BRANDING</h3><div class="ct-form-grid">
+        <label>Primary Colour<input id="profilePrimary" type="color" value="${esc(team.primaryColor||'#0d47a1')}"></label>
+        <label>Secondary Colour<input id="profileSecondary" type="color" value="${esc(team.secondaryColor||'#ffffff')}"></label>
+      </div></div>
+      <button class="ct-save-primary" id="profileSave">SAVE TEAM PROFILE</button>
+      <div class="error" id="profileError"></div><div class="success-box" id="profileSuccess"></div>
+    </form>`);
+  document.getElementById('profileLogo').onchange=async e=>{try{const d=await fileToCompressedDataUrl(e.target.files?.[0]);if(d)document.getElementById('teamLogoPreview').src=d;}catch(ex){alert(ex.message);e.target.value='';}};
+  document.getElementById('teamProfileForm').onsubmit=async e=>{
+    e.preventDefault();const btn=document.getElementById('profileSave'),err=document.getElementById('profileError'),ok=document.getElementById('profileSuccess');err.style.display='none';ok.style.display='none';
+    try{btn.disabled=true;btn.textContent='SAVING…';let logoDataUrl=team.logoDataUrl||'';const f=document.getElementById('profileLogo').files?.[0];if(f)logoDataUrl=await fileToCompressedDataUrl(f);
+      const updates={name:document.getElementById('profileName').value.trim(),shortName:document.getElementById('profileShortName').value.trim().toUpperCase(),city:document.getElementById('profileCity').value.trim(),establishedYear:document.getElementById('profileYear').value.trim(),tagline:document.getElementById('profileTagline').value.trim(),managerName:document.getElementById('profileManager').value.trim(),mobile:document.getElementById('profileMobile').value.trim(),captainName:document.getElementById('profileCaptain').value.trim(),viceCaptainName:document.getElementById('profileViceCaptain').value.trim(),homeGround:document.getElementById('profileGround').value.trim(),primaryColor:document.getElementById('profilePrimary').value,secondaryColor:document.getElementById('profileSecondary').value,logoDataUrl,updatedAt:serverTimestamp()};
+      if(!updates.name)throw new Error('Team Name is required.');await updateDoc(doc(db,'teams',team.teamId),updates);Object.assign(team,updates);ok.innerHTML='<strong>Team profile saved successfully</strong><span>Your dashboard will use the updated team identity.</span>';ok.style.display='grid';
+    }catch(ex){err.textContent=friendlyError(ex);err.style.display='block';}finally{btn.disabled=false;btn.textContent='SAVE TEAM PROFILE';}
+  };
+}
+
+async function teamSquadPage(user,team){
+  teamModuleShell(team,'PLAYERS & SQUAD','Manage players, roles and your Playing XI',`
+    <section class="ct-squad-summary"><div><b id="squadTotal">0</b><span>Total Players</span></div><div><b id="squadActive">0</b><span>Active</span></div><div><b id="squadXI">0</b><span>Playing XI</span></div><div><b id="squadBench">0</b><span>Bench</span></div></section>
+    <div class="ct-squad-actions"><button class="ct-save-primary" id="addPlayerBtn">+ ADD PLAYER</button><div class="ct-squad-filter"><button data-squad-filter="all" class="active">ALL</button><button data-squad-filter="xi">PLAYING XI</button><button data-squad-filter="active">ACTIVE</button><button data-squad-filter="inactive">INACTIVE</button></div></div>
+    <div id="playerFormWrap" class="ct-player-form-wrap" hidden>
+      <form id="playerForm" class="ct-premium-form compact"><div class="ct-form-grid">
+        <label>Player Name *<input id="playerName" required></label><label>Jersey No.<input id="playerJersey" inputmode="numeric" maxlength="3"></label>
+        <label>Role<select id="playerRole"><option>Batter</option><option>Bowler</option><option>All-rounder</option><option>Wicketkeeper</option><option>WK-Batter</option></select></label>
+        <label>Batting Style<select id="playerBat"><option>Right Hand</option><option>Left Hand</option></select></label>
+        <label>Bowling Style<select id="playerBowl"><option>None</option><option>Right Arm Fast</option><option>Right Arm Medium</option><option>Left Arm Fast</option><option>Left Arm Medium</option><option>Right Arm Off Spin</option><option>Right Arm Leg Spin</option><option>Left Arm Orthodox</option><option>Left Arm Wrist Spin</option></select></label>
+        <label class="ct-check-label"><input id="playerCaptain" type="checkbox"> Captain</label><label class="ct-check-label"><input id="playerVC" type="checkbox"> Vice Captain</label><label class="ct-check-label"><input id="playerWK" type="checkbox"> Wicketkeeper</label>
+      </div><div class="ct-form-buttons"><button type="button" class="ct-secondary-btn" id="cancelPlayer">CANCEL</button><button class="ct-save-primary" id="savePlayer">SAVE PLAYER</button></div><div class="error" id="playerError"></div></form>
+    </div>
+    <div id="squadList" class="ct-squad-list"><div class="loading-card">Loading squad…</div></div>`);
+  let players=[],filter='all';
+  const render=()=>{
+    const visible=players.filter(p=>filter==='all'||(filter==='xi'&&p.playingXI)||(filter==='active'&&p.active!==false)||(filter==='inactive'&&p.active===false));
+    document.getElementById('squadTotal').textContent=players.length;document.getElementById('squadActive').textContent=players.filter(p=>p.active!==false).length;document.getElementById('squadXI').textContent=players.filter(p=>p.playingXI).length;document.getElementById('squadBench').textContent=players.filter(p=>p.active!==false&&!p.playingXI).length;
+    document.getElementById('squadList').innerHTML=visible.length?visible.map(p=>`<article class="ct-player-row" data-player="${esc(p.id)}"><div class="ct-player-number">${esc(p.jerseyNo||'—')}</div><div class="ct-player-main"><strong>${esc(p.name)}</strong><span>${esc(p.role||'Player')} • ${esc(p.battingStyle||'')}</span><small>${p.isCaptain?'CAPTAIN • ':''}${p.isViceCaptain?'VICE CAPTAIN • ':''}${p.isWicketKeeper?'WICKETKEEPER • ':''}${p.active===false?'INACTIVE':'ACTIVE'}</small></div><div class="ct-player-controls"><button data-xi="${esc(p.id)}" class="${p.playingXI?'on':''}">${p.playingXI?'XI ✓':'ADD XI'}</button><button data-active="${esc(p.id)}">${p.active===false?'ACTIVATE':'INACTIVATE'}</button></div></article>`).join(''):'<div class="empty-state"><strong>No players in this view</strong><span>Add your first player to build the squad.</span></div>';
+    document.querySelectorAll('[data-xi]').forEach(b=>b.onclick=async()=>{const id=b.dataset.xi,p=players.find(x=>x.id===id);if(!p)return;if(!p.playingXI&&players.filter(x=>x.playingXI).length>=11){alert('Playing XI already has 11 players. Remove one player first.');return;}try{await updateDoc(doc(db,'teams',team.teamId,'players',id),{playingXI:!p.playingXI,updatedAt:serverTimestamp()});p.playingXI=!p.playingXI;render();}catch(ex){alert(friendlyError(ex));}});
+    document.querySelectorAll('[data-active]').forEach(b=>b.onclick=async()=>{const id=b.dataset.active,p=players.find(x=>x.id===id);if(!p)return;try{const active=p.active===false;await updateDoc(doc(db,'teams',team.teamId,'players',id),{active,playingXI:active?p.playingXI:false,updatedAt:serverTimestamp()});p.active=active;if(!active)p.playingXI=false;render();}catch(ex){alert(friendlyError(ex));}});
+  };
+  async function load(){try{const snap=await getDocs(collection(db,'teams',team.teamId,'players'));players=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(Number(a.jerseyNo)||999)-(Number(b.jerseyNo)||999)||String(a.name).localeCompare(String(b.name)));render();}catch(ex){document.getElementById('squadList').innerHTML=`<div class="error visible">${esc(friendlyError(ex))}</div>`;}}
+  document.getElementById('addPlayerBtn').onclick=()=>{document.getElementById('playerFormWrap').hidden=false;document.getElementById('playerName').focus();};document.getElementById('cancelPlayer').onclick=()=>{document.getElementById('playerFormWrap').hidden=true;document.getElementById('playerForm').reset();};
+  document.querySelectorAll('[data-squad-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.squadFilter;document.querySelectorAll('[data-squad-filter]').forEach(x=>x.classList.toggle('active',x===b));render();});
+  document.getElementById('playerForm').onsubmit=async e=>{e.preventDefault();const btn=document.getElementById('savePlayer'),err=document.getElementById('playerError');err.style.display='none';try{btn.disabled=true;btn.textContent='SAVING…';const name=document.getElementById('playerName').value.trim();if(!name)throw new Error('Player Name is required.');const data={name,jerseyNo:document.getElementById('playerJersey').value.trim(),role:document.getElementById('playerRole').value,battingStyle:document.getElementById('playerBat').value,bowlingStyle:document.getElementById('playerBowl').value,isCaptain:document.getElementById('playerCaptain').checked,isViceCaptain:document.getElementById('playerVC').checked,isWicketKeeper:document.getElementById('playerWK').checked,active:true,playingXI:false,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};const ref=await addDoc(collection(db,'teams',team.teamId,'players'),data);players.push({id:ref.id,...data});players.sort((a,b)=>(Number(a.jerseyNo)||999)-(Number(b.jerseyNo)||999)||String(a.name).localeCompare(String(b.name)));document.getElementById('playerForm').reset();document.getElementById('playerFormWrap').hidden=true;render();}catch(ex){err.textContent=friendlyError(ex);err.style.display='block';}finally{btn.disabled=false;btn.textContent='SAVE PLAYER';}};
+  await load();
+}
+
 function tournamentDashboard(user,t){shell(`<main class="dashboard ct-dashboard-shell ct-tournament-dashboard-v240"><div class="ct-dash-hero tournament"><div><div class="ct-dash-role">🏆 TOURNAMENT WORKSPACE</div><h2>${esc(t.name||t.tournamentId)}</h2><p>Tournament ID: ${esc(t.tournamentId||'')} • Setup workspace</p></div><button class="ct-dash-logout" id="tourLogout">Logout</button></div><div class="ct-dash-stats tournament-stats"><div><b>✓</b><span>Registered</span></div><div><b>⚙</b><span>Setup Ready</span></div><div><b>📅</b><span>Fixtures</span></div><div><b>🔒</b><span>Secure</span></div></div><div class="ct-dash-title"><strong>TOURNAMENT DASHBOARD</strong><span>Organize • Monitor • Publish</span></div><div class="ct-dash-grid tournament-grid-v240"><button class="ct-dash-card purple"><div>👥</div><strong>TEAMS</strong><small>Add, invite & manage teams</small></button><button class="ct-dash-card purple"><div>🧍</div><strong>PLAYERS</strong><small>Registration & approvals</small></button><button class="ct-dash-card green"><div>📅</div><strong>FIXTURES</strong><small>Create & schedule fixtures</small></button><button class="ct-dash-card blue" id="tourStartMatch"><div>📡</div><strong>LIVE MATCHES</strong><small>Start or monitor matches</small></button><button class="ct-dash-card blue"><div>✅</div><strong>RESULTS</strong><small>Results & full scorecards</small></button><button class="ct-dash-card orange"><div>📊</div><strong>POINTS TABLE</strong><small>Standings & qualification</small></button><button class="ct-dash-card orange"><div>🏆</div><strong>KNOCKOUTS</strong><small>Playoffs, semis & final</small></button><button class="ct-dash-card green"><div>📈</div><strong>STATISTICS</strong><small>Players, teams & records</small></button><button class="ct-dash-card red"><div>🥇</div><strong>AWARDS</strong><small>Awards & tournament honours</small></button><button class="ct-dash-card blue"><div>🏟️</div><strong>VENUES</strong><small>Grounds & availability</small></button><button class="ct-dash-card purple"><div>🔔</div><strong>ANNOUNCEMENTS</strong><small>Teams, officials & public</small></button><button class="ct-dash-card red"><div>⚙️</div><strong>SETTINGS</strong><small>Rules, branding & security</small></button></div><div class="ct-dash-secure">🛡️ <span><strong>Tournament workspace securely connected</strong><small>Setup data is saved in real time</small></span></div></main>`,'TOURNAMENT • SETUP WORKSPACE');document.getElementById('tourLogout').onclick=async()=>{await signOut(auth);home();};document.getElementById('tourStartMatch').onclick=()=>alert(t.canStartMatch?'Match start access active. Live Match module is the next coding phase.':'Subscription is required when you start tournament matches. Your setup data remains safe.');}
 function scorerDashboard(user,u){shell(`<main class="dashboard premium-dashboard"><div class="topbar"><div><div class="admin-chip">🧑‍💻 SCORER</div><h2 class="section-title">My Matches</h2><p class="section-copy">Only matches assigned to this scorer will appear here.</p></div><button class="logout" id="scorerLogout">Logout</button></div><div class="empty-state"><div>🏏</div><strong>No assigned matches yet</strong><span>Tournament Admin can assign multiple scorers to different simultaneous matches.</span></div></main>`,'SCORER • ASSIGNED MATCHES');document.getElementById('scorerLogout').onclick=async()=>{await signOut(auth);home();};}
 

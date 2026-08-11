@@ -1,0 +1,205 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function adminPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.uid);
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn()
+        && exists(adminPath())
+        && get(adminPath()).data.role == 'superadmin';
+    }
+
+    function isTeamOwner(teamId) {
+      return isSignedIn()
+        && exists(userPath())
+        && get(userPath()).data.role == 'team'
+        && get(userPath()).data.teamId == teamId
+        && get(userPath()).data.status == 'active';
+    }
+
+    function isTournamentOwner(tournamentId) {
+      return isSignedIn()
+        && exists(userPath())
+        && get(userPath()).data.role == 'tournament'
+        && get(userPath()).data.tournamentId == tournamentId
+        && get(userPath()).data.status == 'active';
+    }
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn()
+        && request.auth.uid == adminId
+        && resource.data.role == 'superadmin';
+      allow list: if isSuperAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn()
+        && (request.auth.uid == userId || isSuperAdmin());
+      allow list: if isSuperAdmin();
+
+      allow create: if isSuperAdmin()
+        || (
+          isSignedIn()
+          && request.auth.uid == userId
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.role == 'team'
+          && request.resource.data.status == 'active'
+          && request.resource.data.teamId is string
+          && request.resource.data.teamId.size() >= 4
+          && request.resource.data.teamId.size() <= 20
+          && getAfter(/databases/$(database)/documents/teams/$(request.resource.data.teamId)).data.authUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/teams/$(request.resource.data.teamId)).data.teamId == request.resource.data.teamId
+        )
+        || (
+          isSignedIn()
+          && request.auth.uid == userId
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.role == 'tournament'
+          && request.resource.data.status == 'active'
+          && request.resource.data.tournamentId is string
+          && request.resource.data.tournamentId.size() >= 4
+          && request.resource.data.tournamentId.size() <= 20
+          && getAfter(/databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)).data.authUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)).data.tournamentId == request.resource.data.tournamentId
+        );
+
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /teams/{teamId} {
+      allow get: if resource == null || isSuperAdmin() || isTeamOwner(teamId);
+      allow list: if isSuperAdmin();
+
+      allow create: if isSuperAdmin()
+        || (
+          isSignedIn()
+          && request.resource.data.teamId == teamId
+          && request.resource.data.authUid == request.auth.uid
+          && request.resource.data.registrationSource == 'self-service'
+          && request.resource.data.status == 'active'
+          && request.resource.data.trialMatchesAllowed == 1
+          && request.resource.data.trialMatchesUsed == 0
+          && request.resource.data.subscriptionStatus == 'trial'
+          && request.resource.data.planId == 'team-free-trial'
+          && request.resource.data.schemaVersion == 3
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.uid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'team'
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId == teamId
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active'
+        );
+
+      allow update: if isSuperAdmin()
+        || (
+          isTeamOwner(teamId)
+          && request.resource.data.teamId == resource.data.teamId
+          && request.resource.data.authUid == resource.data.authUid
+          && request.resource.data.registrationSource == resource.data.registrationSource
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.subscriptionStatus == resource.data.subscriptionStatus
+          && request.resource.data.trialMatchesAllowed == resource.data.trialMatchesAllowed
+          && request.resource.data.trialMatchesUsed == resource.data.trialMatchesUsed
+          && request.resource.data.planId == resource.data.planId
+        );
+
+      allow delete: if isSuperAdmin();
+
+      // v2.7.0 Players & Squad
+      match /players/{playerId} {
+        allow get, list: if isSuperAdmin() || isTeamOwner(teamId);
+
+        allow create: if isSuperAdmin()
+          || (
+            isTeamOwner(teamId)
+            && request.resource.data.name is string
+            && request.resource.data.name.size() > 0
+            && request.resource.data.name.size() <= 80
+            && request.resource.data.active == true
+            && request.resource.data.playingXI == false
+          );
+
+        allow update: if isSuperAdmin()
+          || (
+            isTeamOwner(teamId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'name','jerseyNo','role','battingStyle','bowlingStyle',
+              'isCaptain','isViceCaptain','isWicketKeeper',
+              'active','playingXI','updatedAt'
+            ])
+          );
+
+        allow delete: if isSuperAdmin();
+      }
+    }
+
+    match /tournaments/{tournamentId} {
+      allow get: if resource == null || isSuperAdmin() || isTournamentOwner(tournamentId);
+      allow list: if isSuperAdmin();
+
+      allow create: if isSuperAdmin()
+        || (
+          isSignedIn()
+          && request.resource.data.tournamentId == tournamentId
+          && request.resource.data.authUid == request.auth.uid
+          && request.resource.data.registrationSource == 'self-service'
+          && request.resource.data.status == 'setup'
+          && request.resource.data.subscriptionStatus == 'inactive'
+          && request.resource.data.paymentStatus == 'not_paid'
+          && request.resource.data.canSetup == true
+          && request.resource.data.canStartMatch == false
+          && request.resource.data.planId == null
+          && request.resource.data.schemaVersion == 3
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.uid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'tournament'
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.tournamentId == tournamentId
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active'
+        );
+
+      allow update: if isSuperAdmin()
+        || (
+          isTournamentOwner(tournamentId)
+          && request.resource.data.tournamentId == resource.data.tournamentId
+          && request.resource.data.authUid == resource.data.authUid
+          && request.resource.data.registrationSource == resource.data.registrationSource
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.subscriptionStatus == resource.data.subscriptionStatus
+          && request.resource.data.paymentStatus == resource.data.paymentStatus
+          && request.resource.data.canSetup == resource.data.canSetup
+          && request.resource.data.canStartMatch == resource.data.canStartMatch
+          && request.resource.data.planId == resource.data.planId
+        );
+
+      allow delete: if isSuperAdmin();
+    }
+
+    match /publicStats/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /publicMatches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

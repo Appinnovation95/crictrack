@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='3.9.0';
+const VERSION='4.0.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -20,36 +20,40 @@ const scorerAuthEmail=id=>`${normalizeId(id).toLowerCase()}@scorers.crictrack.ap
 
 function showCricTrackIntro(){
   if(document.getElementById('ctCinematicIntro'))return;
+  const boot=document.getElementById('ctBootSplash'); if(boot)boot.remove();
   const intro=document.createElement('div');
-  intro.id='ctCinematicIntro';
-  intro.className='ct-cinematic-intro';
+  intro.id='ctCinematicIntro'; intro.className='ct-cinematic-intro ct-film';
   intro.innerHTML=`
+    <div class="ct-film-grain"></div><div class="ct-vignette"></div>
     <button class="ct-intro-skip" id="ctIntroSkip" aria-label="Skip intro">SKIP</button>
-    <div class="ct-intro-frame frame-stadium">
-      <div class="ct-stadium-beam beam-left"></div><div class="ct-stadium-beam beam-right"></div>
-      <div class="ct-stadium-horizon"></div><div class="ct-intro-caption">THE STADIUM AWAKENS</div>
-    </div>
-    <div class="ct-intro-frame frame-ball">
-      <div class="ct-ball-trail"><span></span></div><div class="ct-intro-ball"></div>
-    </div>
-    <div class="ct-intro-frame frame-icon">
-      <div class="ct-icon-aura"></div><img src="./icon-192.png" alt="CricTrack" class="ct-intro-icon">
-    </div>
-    <div class="ct-intro-frame frame-name">
-      <div class="ct-intro-brand"><span>CRIC</span><em>TRACK</em></div>
-      <div class="ct-intro-tagline">PLAY <i>•</i> TRACK <i>•</i> SHARE <i>•</i> RISE</div>
-    </div>
-    <div class="ct-intro-frame frame-quote">
-      <div class="ct-intro-quote"><span>EVERY RUN</span><span>HAS A STORY.</span><b>CRICTRACK</b><span>REMEMBERS IT.</span></div>
-    </div>
-    <div class="ct-intro-frame frame-finish">
-      <div class="ct-wicket-scene"><div class="ct-stump s1"></div><div class="ct-stump s2"></div><div class="ct-stump s3"></div><div class="ct-bail b1"></div><div class="ct-bail b2"></div></div>
-      <div class="ct-ksr-signature"><span>A</span><strong>KSR ENTERPRISES</strong><span>PRODUCT</span></div>
-    </div>`;
+    <section class="ct-scene scene-awake">
+      <div class="ct-sky-glow"></div><div class="ct-floodlight left"><i></i><i></i><i></i><i></i><i></i></div><div class="ct-floodlight right"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="ct-light-cone cone-l"></div><div class="ct-light-cone cone-r"></div><div class="ct-crowd"></div><div class="ct-pitch"></div>
+      <div class="ct-scene-label">THE STADIUM AWAKENS</div>
+    </section>
+    <section class="ct-scene scene-ball">
+      <div class="ct-speed-lines"></div><div class="ct-ball-tail"></div><div class="ct-real-ball"><i></i></div><div class="ct-ground-glow"></div>
+      <div class="ct-scene-label">THE GAME BEGINS</div>
+    </section>
+    <section class="ct-scene scene-mark">
+      <div class="ct-logo-rings"><i></i><i></i><i></i></div><div class="ct-logo-platform"></div><img src="./icon-192.png" class="ct-hero-icon" alt="CricTrack">
+      <div class="ct-scene-label">EVERY RUN. EVERY MOMENT.</div>
+    </section>
+    <section class="ct-scene scene-brand">
+      <div class="ct-brand-flare"></div><div class="ct-wordmark"><span>CRIC</span><b>TRACK</b></div><div class="ct-brand-rule"></div>
+      <div class="ct-motto">PLAY <i>•</i> TRACK <i>•</i> SHARE <i>•</i> RISE</div>
+    </section>
+    <section class="ct-scene scene-story">
+      <div class="ct-story"><span>EVERY RUN</span><span>HAS A STORY.</span><b>CRICTRACK</b><span>REMEMBERS IT.</span></div><div class="ct-story-line"></div>
+    </section>
+    <section class="ct-scene scene-legacy">
+      <div class="ct-wicket-halo"></div><div class="ct-premium-wickets"><i></i><i></i><i></i><b class="bail-one"></b><b class="bail-two"></b></div>
+      <div class="ct-owner-mark"><small>A</small><strong>KSR ENTERPRISES</strong><small>PRODUCT</small></div>
+    </section>`;
   document.body.appendChild(intro);
-  const close=()=>{intro.classList.add('closing');setTimeout(()=>intro.remove(),420)};
+  const close=()=>{if(intro.dataset.closed)return;intro.dataset.closed='1';intro.classList.add('closing');setTimeout(()=>intro.remove(),650)};
   document.getElementById('ctIntroSkip').onclick=close;
-  setTimeout(close,6000);
+  setTimeout(close,7200);
 }
 showCricTrackIntro();
 

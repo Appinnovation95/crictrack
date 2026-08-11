@@ -150,7 +150,8 @@ service cloud.firestore {
 
       // v2.7.0 Players & Squad
       match /players/{playerId} {
-        allow get, list: if isSuperAdmin() || isTeamOwner(teamId);
+        allow get: if isSuperAdmin() || isTeamOwner(teamId) || resource.data.shareProfile == true;
+        allow list: if isSuperAdmin() || isTeamOwner(teamId);
 
         allow create: if isSuperAdmin()
           || (

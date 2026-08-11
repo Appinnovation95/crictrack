@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='3.8.0';
+const VERSION='3.9.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -16,6 +16,42 @@ const normalizeId=(v='')=>v.trim().toUpperCase().replace(/\s+/g,'-').replace(/[^
 const teamAuthEmail=id=>`${normalizeId(id).toLowerCase()}@teams.crictrack.app`;
 const tournamentAuthEmail=id=>`${normalizeId(id).toLowerCase()}@tournaments.crictrack.app`;
 const scorerAuthEmail=id=>`${normalizeId(id).toLowerCase()}@scorers.crictrack.app`;
+
+
+function showCricTrackIntro(){
+  if(document.getElementById('ctCinematicIntro'))return;
+  const intro=document.createElement('div');
+  intro.id='ctCinematicIntro';
+  intro.className='ct-cinematic-intro';
+  intro.innerHTML=`
+    <button class="ct-intro-skip" id="ctIntroSkip" aria-label="Skip intro">SKIP</button>
+    <div class="ct-intro-frame frame-stadium">
+      <div class="ct-stadium-beam beam-left"></div><div class="ct-stadium-beam beam-right"></div>
+      <div class="ct-stadium-horizon"></div><div class="ct-intro-caption">THE STADIUM AWAKENS</div>
+    </div>
+    <div class="ct-intro-frame frame-ball">
+      <div class="ct-ball-trail"><span></span></div><div class="ct-intro-ball"></div>
+    </div>
+    <div class="ct-intro-frame frame-icon">
+      <div class="ct-icon-aura"></div><img src="./icon-192.png" alt="CricTrack" class="ct-intro-icon">
+    </div>
+    <div class="ct-intro-frame frame-name">
+      <div class="ct-intro-brand"><span>CRIC</span><em>TRACK</em></div>
+      <div class="ct-intro-tagline">PLAY <i>•</i> TRACK <i>•</i> SHARE <i>•</i> RISE</div>
+    </div>
+    <div class="ct-intro-frame frame-quote">
+      <div class="ct-intro-quote"><span>EVERY RUN</span><span>HAS A STORY.</span><b>CRICTRACK</b><span>REMEMBERS IT.</span></div>
+    </div>
+    <div class="ct-intro-frame frame-finish">
+      <div class="ct-wicket-scene"><div class="ct-stump s1"></div><div class="ct-stump s2"></div><div class="ct-stump s3"></div><div class="ct-bail b1"></div><div class="ct-bail b2"></div></div>
+      <div class="ct-ksr-signature"><span>A</span><strong>KSR ENTERPRISES</strong><span>PRODUCT</span></div>
+    </div>`;
+  document.body.appendChild(intro);
+  const close=()=>{intro.classList.add('closing');setTimeout(()=>intro.remove(),420)};
+  document.getElementById('ctIntroSkip').onclick=close;
+  setTimeout(close,6000);
+}
+showCricTrackIntro();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;document.querySelectorAll('[data-install]').forEach(b=>b.hidden=false);});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;document.querySelectorAll('[data-install]').forEach(b=>b.hidden=true);});

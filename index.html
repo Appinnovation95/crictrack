@@ -15,10 +15,37 @@
   <link rel="apple-touch-icon" href="./icon-192.png" />
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./ui-foundation.css" />
+<style id="ct-intro-critical">
+html.ct-intro-lock, html.ct-intro-lock body { overflow:hidden !important; background:#010917 !important; }
+#ct-intro-root{position:fixed;inset:0;z-index:2147483647;background:#010917;display:grid;place-items:center;overflow:hidden;opacity:1;transition:opacity .9s ease;}
+#ct-intro-root.ct-intro-hide{opacity:0;pointer-events:none;}
+.ct-intro-logo-stage,.ct-intro-poster-stage{position:absolute;inset:0;display:grid;place-items:center;}
+.ct-intro-logo-stage{animation:ctLogoStage 1.9s ease forwards;}
+.ct-intro-logo{width:min(32vw,150px);height:auto;border-radius:28%;filter:drop-shadow(0 0 18px #168dff) drop-shadow(0 0 42px rgba(0,119,255,.55));animation:ctLogoPulse 1.7s ease both;}
+.ct-intro-poster-stage{opacity:0;animation:ctPosterStage 5.1s 1.35s ease forwards;background:#010917;}
+.ct-intro-poster{width:100vw;height:100dvh;object-fit:cover;object-position:center;transform:scale(1.06);animation:ctPosterZoom 5.1s 1.35s cubic-bezier(.2,.7,.2,1) forwards;filter:saturate(1.06) contrast(1.04);}
+@keyframes ctLogoStage{0%{opacity:0}18%{opacity:1}74%{opacity:1}100%{opacity:0}}
+@keyframes ctLogoPulse{0%{transform:scale(.76);opacity:0}45%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes ctPosterStage{0%{opacity:0}12%{opacity:1}82%{opacity:1}100%{opacity:0}}
+@keyframes ctPosterZoom{0%{transform:scale(1.07)}100%{transform:scale(1.0)}}
+@media (prefers-reduced-motion:reduce){.ct-intro-logo-stage,.ct-intro-logo,.ct-intro-poster-stage,.ct-intro-poster{animation-duration:.01ms!important;animation-delay:0!important}.ct-intro-poster-stage{opacity:1}}
+</style>
+<script>document.documentElement.classList.add('ct-intro-lock');</script>
 </head>
 <body>
-  <div id="ctBootSplash" class="ct-boot-splash" aria-hidden="true"></div>
   <div id="app"></div>
   <script type="module" src="./app.js"></script>
+<script>
+(function(){
+  var intro=document.getElementById('ct-intro-root');
+  if(!intro) return;
+  var end=function(){
+    intro.classList.add('ct-intro-hide');
+    document.documentElement.classList.remove('ct-intro-lock');
+    setTimeout(function(){ if(intro && intro.parentNode) intro.parentNode.removeChild(intro); }, 950);
+  };
+  setTimeout(end, 6450);
+})();
+</script>
 </body>
 </html>

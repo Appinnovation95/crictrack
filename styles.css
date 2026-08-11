@@ -269,3 +269,20 @@ body{background:linear-gradient(180deg,#03162f 0 30%,#eef4ff 30% 100%)}
 .ct-player-avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#061b37,#0b5fbd);border:2px solid #63c3ff;color:#fff;flex:0 0 48px;box-shadow:0 0 16px rgba(64,178,255,.2)}
 .ct-player-avatar img{width:100%;height:100%;object-fit:cover}.ct-player-avatar b{font-size:1rem}.ct-player-row{align-items:center}.ct-player-controls{gap:6px}.ct-player-controls [data-photo]{border-color:#43b6ff;color:#d8f2ff;background:#083765}.ct-pdf-action-grid button:nth-child(n+10){background:linear-gradient(145deg,#142e62,#0a56b7);border-color:#69bfff}.ct-pdf-action-grid button:nth-child(10),.ct-pdf-action-grid button:nth-child(11){background:linear-gradient(145deg,#5d3506,#b87308);border-color:#ffc75b}.ct-pdf-action-grid button:nth-child(13),.ct-pdf-action-grid button:nth-child(16){background:linear-gradient(145deg,#073b2b,#0a8c62);border-color:#55e2af}
 @media(max-width:600px){.ct-player-row{grid-template-columns:auto auto 1fr}.ct-player-controls{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}.ct-player-controls button{min-width:0}.ct-pdf-action-grid button{min-height:88px}}
+
+/* v3.8.0 Player Edit + Shared ID + Opponent Roster Studio */
+.ct-player-share-id{display:block;margin-top:7px;color:#70c8ff!important;font-size:11px!important;letter-spacing:.3px;word-break:break-all}
+.ct-player-controls{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important;min-width:150px}
+.ct-player-controls button{min-height:38px;font-weight:800}
+.ct-opponent-toolbar{display:flex;justify-content:flex-end;margin:0 0 16px}
+.ct-opponent-player-add{margin-top:14px;padding:14px;border:1px solid #246cb2;border-radius:18px;background:rgba(5,28,56,.72)}
+.ct-opponent-player-add h4{margin:0 0 12px;color:#fff;font-size:17px}
+.ct-import-row{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:12px}
+.ct-import-row input{min-width:0;border:1px solid #317dc4;background:#061f3d;color:#fff;border-radius:12px;padding:12px}
+.ct-opponent-roster-preview{display:grid;gap:9px;margin-top:14px}
+.ct-mini-player{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:10px 12px;border:1px solid #2f7bc2;border-radius:14px;background:linear-gradient(135deg,#0d4fa0,#0a2d61);color:#fff}
+.ct-mini-player .ct-player-avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;background:#031a36;display:grid;place-items:center;border:2px solid #6dc8ff}
+.ct-mini-player .ct-player-avatar img{width:100%;height:100%;object-fit:cover}
+.ct-mini-player strong{display:block;font-size:16px}.ct-mini-player span{display:block;font-size:12px;color:#cbe7ff;margin-top:3px}
+.ct-mini-player button{border:1px solid #7ac7ff;background:#05294f;color:#fff;border-radius:10px;padding:9px 10px;font-weight:800}
+@media(max-width:520px){.ct-player-controls{grid-template-columns:repeat(2,1fr);width:100%;min-width:0}.ct-import-row{grid-template-columns:1fr}.ct-mini-player{grid-template-columns:46px 1fr}.ct-mini-player>button{grid-column:1/-1}}

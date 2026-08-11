@@ -125,7 +125,8 @@ service cloud.firestore {
 
       // v2.8.0 Team Matches
       match /matches/{matchId} {
-        allow get, list: if isSuperAdmin() || isTeamOwner(teamId);
+        allow get: if isSuperAdmin() || isTeamOwner(teamId) || resource.data.shareProfile == true;
+        allow list: if isSuperAdmin() || isTeamOwner(teamId);
         allow create: if isSuperAdmin() || (
           isTeamOwner(teamId)
           && request.resource.data.ownerTeamId == teamId
@@ -167,11 +168,16 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'name','jerseyNo','role','battingStyle','bowlingStyle',
               'isCaptain','isViceCaptain','isWicketKeeper',
-              'active','playingXI','photoDataUrl','updatedAt'
+              'active','playingXI','photoDataUrl','shareProfile','importedFrom','updatedAt'
             ])
           );
 
         allow delete: if isSuperAdmin();
+      }
+
+      // v3.8.0 Reusable opponent team library
+      match /opponents/{opponentId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTeamOwner(teamId);
       }
     }
 

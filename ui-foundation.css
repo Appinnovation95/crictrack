@@ -82,35 +82,75 @@ body{margin:0;background:#020b18}
   .ct-home-secure{padding:2px 4px 4px}
 }
 
-/* CricTrack v2.1.4 — use the full mobile home viewport (no top-packed cards) */
-@media (max-width:560px){
-  .app-shell.ct-v210{min-height:100dvh;overflow-x:hidden}
-  .ct-home-dark{
-    width:100%;
-    flex:1 0 auto;
-    min-height:calc(100dvh - 82px);
-    display:flex;
-    flex-direction:column;
-    justify-content:space-evenly;
-    gap:7px;
-    padding:7px 8px 10px;
-  }
-  .ct-home-dark > *{flex:0 0 auto;margin-bottom:0}
-  .ct-live-home{min-height:96px;display:flex;flex-direction:column;justify-content:flex-start}
-  .ct-live-carousel{flex:1;align-items:center}
-  .ct-live-empty{min-height:58px}
-  .ct-platform-panel{min-height:86px}
-  .ct-platform-grid>div{padding:7px 2px}
-  .ct-registration-grid{margin:0}
-  .ct-registration-card{min-height:98px}
-  .ct-login-grid{margin:0}
-  .ct-login-tile{min-height:92px}
-  .ct-superadmin-bar{min-height:58px;margin:0}
-  .ct-home-secure{min-height:36px;padding:4px}
+/* CricTrack v2.2.0 — sunlight-ready 2 x 3 access grid */
+.ct-access-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-auto-rows:1fr;
+  gap:10px;
+  margin:8px 0 10px;
 }
-@media (max-width:380px) and (max-height:700px){
-  .ct-home-dark{justify-content:flex-start;gap:5px}
-  .ct-live-home{min-height:78px}.ct-live-empty{min-height:42px}
-  .ct-platform-panel{min-height:72px}.ct-platform-grid>div{padding:4px 2px}
-  .ct-registration-card{min-height:82px}.ct-login-tile{min-height:76px}.ct-superadmin-bar{min-height:50px}.ct-home-secure{min-height:28px}
+.ct-access-card{
+  --card-accent:#45ef4d;
+  --card-start:#073c20;
+  --card-end:#062818;
+  position:relative;
+  min-height:150px;
+  padding:14px 13px;
+  border-radius:18px;
+  border:2px solid var(--card-accent);
+  background:linear-gradient(145deg,var(--card-start),var(--card-end));
+  color:#fff;
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+  text-align:left;
+  overflow:hidden;
+  isolation:isolate;
+  box-shadow:0 8px 22px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.ct-access-card::before{
+  content:"";
+  position:absolute;
+  inset:-40% -20% auto 35%;
+  height:150%;
+  background:radial-gradient(circle,rgba(255,255,255,.12),transparent 60%);
+  z-index:-1;
+  pointer-events:none;
+}
+.ct-access-card:active{transform:scale(.985)}
+.ct-access-team-reg{--card-accent:#53f04b;--card-start:#18a82f;--card-end:#08731f}
+.ct-access-tournament-reg{--card-accent:#c675ff;--card-start:#7d32c6;--card-end:#4e1889}
+.ct-access-team-login{--card-accent:#15f0a0;--card-start:#0f9b64;--card-end:#076446}
+.ct-access-tournament-login{--card-accent:#b966ff;--card-start:#7134b1;--card-end:#492178}
+.ct-access-scorer-login{--card-accent:#29b9ff;--card-start:#087ac5;--card-end:#07569b}
+.ct-access-admin-login{--card-accent:#ff5b45;--card-start:#f04a16;--card-end:#bd2515}
+.ct-access-icon{
+  width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  font-size:27px;background:rgba(0,0,0,.18);border:2px solid rgba(255,255,255,.30);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)
+}
+.ct-access-copy{min-width:0;display:flex;flex-direction:column;height:100%}
+.ct-access-copy strong{font-size:15px;line-height:1.15;letter-spacing:.1px;font-weight:950;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.ct-access-copy span{display:block;margin-top:7px;color:#fff;font-size:9px;line-height:1.35;opacity:.96;min-height:37px}
+.ct-access-copy i{
+  margin-top:auto;display:block;background:#fff;color:var(--card-end);border-radius:10px;
+  padding:8px 9px;text-align:center;font-style:normal;font-size:8.5px;font-weight:950;
+  box-shadow:0 3px 8px rgba(0,0,0,.17)
+}
+@media (max-width:560px){
+  .ct-access-grid{gap:7px;margin:6px 0 7px}
+  .ct-access-card{min-height:112px;padding:9px 8px;border-radius:14px;grid-template-columns:40px minmax(0,1fr);gap:8px;border-width:1.5px}
+  .ct-access-icon{width:39px;height:39px;font-size:20px;border-width:1.5px}
+  .ct-access-copy strong{font-size:10.5px;line-height:1.12}
+  .ct-access-copy span{font-size:6.7px;line-height:1.28;margin-top:4px;min-height:26px}
+  .ct-access-copy i{font-size:6.8px;padding:5px 5px;border-radius:8px}
+  .ct-home-dark{padding-bottom:8px}
+}
+@media (max-width:380px){
+  .ct-access-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .ct-access-card{min-height:108px;padding:8px 7px;grid-template-columns:36px minmax(0,1fr);gap:6px}
+  .ct-access-icon{width:35px;height:35px;font-size:18px}
+  .ct-access-copy strong{font-size:9.5px}.ct-access-copy span{font-size:6.2px}.ct-access-copy i{font-size:6.3px}
 }

@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='2.1.2';
+const VERSION='2.2.0';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -47,18 +47,26 @@ function home(){
       </div>
     </section>
 
-    <section class="ct-registration-grid">
-      <button class="ct-registration-card ct-reg-team" data-register="team"><div class="ct-reg-icon">👥</div><div><h2>TEAM REGISTRATION</h2><p>Register your cricket team and create your secure Team ID.</p><strong>REGISTER TEAM →</strong></div></button>
-      <button class="ct-registration-card ct-reg-tournament" data-register="tournament"><div class="ct-reg-icon">🏆</div><div><h2>TOURNAMENT REGISTRATION</h2><p>Register your tournament and create your secure Tournament ID.</p><strong>REGISTER TOURNAMENT →</strong></div></button>
+    <section class="ct-access-grid" aria-label="CricTrack registration and login">
+      <button class="ct-access-card ct-access-team-reg" data-register="team">
+        <div class="ct-access-icon">👥</div><div class="ct-access-copy"><strong>TEAM<br>REGISTRATION</strong><span>Register your cricket team and create your Team ID.</span><i>GET STARTED →</i></div>
+      </button>
+      <button class="ct-access-card ct-access-tournament-reg" data-register="tournament">
+        <div class="ct-access-icon">🏆</div><div class="ct-access-copy"><strong>TOURNAMENT<br>REGISTRATION</strong><span>Register your tournament and create your Tournament ID.</span><i>GET STARTED →</i></div>
+      </button>
+      <button class="ct-access-card ct-access-team-login" data-login="team">
+        <div class="ct-access-icon">👥</div><div class="ct-access-copy"><strong>TEAM<br>LOGIN</strong><span>Login to your team account.</span><i>LOGIN →</i></div>
+      </button>
+      <button class="ct-access-card ct-access-tournament-login" data-login="tournament">
+        <div class="ct-access-icon">🏆</div><div class="ct-access-copy"><strong>TOURNAMENT<br>LOGIN</strong><span>Login to your tournament account.</span><i>LOGIN →</i></div>
+      </button>
+      <button class="ct-access-card ct-access-scorer-login" data-login="scorer">
+        <div class="ct-access-icon">🧑‍💻</div><div class="ct-access-copy"><strong>SCORER<br>LOGIN</strong><span>Login to score assigned matches.</span><i>LOGIN →</i></div>
+      </button>
+      <button class="ct-access-card ct-access-admin-login" data-login="superadmin">
+        <div class="ct-access-icon">🛡️</div><div class="ct-access-copy"><strong>SUPER ADMIN<br>LOGIN</strong><span>Secure platform control centre.</span><i>LOGIN →</i></div>
+      </button>
     </section>
-
-    <section class="ct-login-grid" aria-label="CricTrack logins">
-      <button class="ct-login-tile team" data-login="team"><div>👥</div><strong>TEAM LOGIN</strong><span>Login to your team account</span><i>LOGIN →</i></button>
-      <button class="ct-login-tile tournament" data-login="tournament"><div>🏆</div><strong>TOURNAMENT LOGIN</strong><span>Login and continue setup</span><i>LOGIN →</i></button>
-      <button class="ct-login-tile scorer" data-login="scorer"><div>🧑‍💻</div><strong>SCORER LOGIN</strong><span>Score assigned matches</span><i>LOGIN →</i></button>
-    </section>
-
-    <button class="ct-superadmin-bar" data-login="superadmin"><span>🛡️</span><div><strong>SUPER ADMIN LOGIN</strong><small>Secure platform control centre</small></div><b>LOGIN →</b></button>
 
     <div class="ct-home-secure">🛡️ <span><strong>Firebase secure connection active</strong><small>Secure • Fast • Reliable</small></span></div>
     <button class="install-wide" data-install hidden>⬇ Install CricTrack App</button>

@@ -81,3 +81,36 @@ body{margin:0;background:#020b18}
   .ct-superadmin-bar{margin-bottom:4px;padding:6px 9px}
   .ct-home-secure{padding:2px 4px 4px}
 }
+
+/* CricTrack v2.1.4 — use the full mobile home viewport (no top-packed cards) */
+@media (max-width:560px){
+  .app-shell.ct-v210{min-height:100dvh;overflow-x:hidden}
+  .ct-home-dark{
+    width:100%;
+    flex:1 0 auto;
+    min-height:calc(100dvh - 82px);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-evenly;
+    gap:7px;
+    padding:7px 8px 10px;
+  }
+  .ct-home-dark > *{flex:0 0 auto;margin-bottom:0}
+  .ct-live-home{min-height:96px;display:flex;flex-direction:column;justify-content:flex-start}
+  .ct-live-carousel{flex:1;align-items:center}
+  .ct-live-empty{min-height:58px}
+  .ct-platform-panel{min-height:86px}
+  .ct-platform-grid>div{padding:7px 2px}
+  .ct-registration-grid{margin:0}
+  .ct-registration-card{min-height:98px}
+  .ct-login-grid{margin:0}
+  .ct-login-tile{min-height:92px}
+  .ct-superadmin-bar{min-height:58px;margin:0}
+  .ct-home-secure{min-height:36px;padding:4px}
+}
+@media (max-width:380px) and (max-height:700px){
+  .ct-home-dark{justify-content:flex-start;gap:5px}
+  .ct-live-home{min-height:78px}.ct-live-empty{min-height:42px}
+  .ct-platform-panel{min-height:72px}.ct-platform-grid>div{padding:4px 2px}
+  .ct-registration-card{min-height:82px}.ct-login-tile{min-height:76px}.ct-superadmin-bar{min-height:50px}.ct-home-secure{min-height:28px}
+}

@@ -167,7 +167,7 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'name','jerseyNo','role','battingStyle','bowlingStyle',
               'isCaptain','isViceCaptain','isWicketKeeper',
-              'active','playingXI','updatedAt'
+              'active','playingXI','photoDataUrl','updatedAt'
             ])
           );
 

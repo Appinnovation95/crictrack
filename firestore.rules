@@ -158,7 +158,7 @@ service cloud.firestore {
             && request.resource.data.name.size() > 0
             && request.resource.data.name.size() <= 80
             && request.resource.data.active == true
-            && request.resource.data.playingXI == false
+            && request.resource.data.playingXI is bool
           );
 
         allow update: if isSuperAdmin()

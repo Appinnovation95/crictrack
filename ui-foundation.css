@@ -60,3 +60,24 @@ button,input,select,textarea{font:inherit} button:focus-visible,input:focus-visi
   .ct-home-secure{padding:3px 4px 5px;gap:5px}.ct-home-secure{font-size:12px}.ct-home-secure strong{font-size:6.8px}.ct-home-secure small{font-size:5.8px}
   .app-shell.ct-v210>.footer{display:none}
 }
+
+
+/* CricTrack v2.1.3 — mobile home viewport fit + no white gap */
+html,body,#app,.app-shell.ct-v210{min-height:100%;background:#020b18}
+body{margin:0;background:#020b18}
+.app-shell.ct-v210{min-height:100dvh;background:linear-gradient(180deg,#031326,#020b18 72%,#031326)}
+.ct-home-dark{box-sizing:border-box;background:radial-gradient(circle at 50% 8%,rgba(13,71,161,.20),transparent 26%),linear-gradient(180deg,#031326,#020b18 64%,#06162b)}
+@media (max-width:560px){
+  .ct-v210 .ct-home-hero{padding:8px 14px 9px}
+  .ct-v210 .brand-app-icon{width:50px;height:50px}
+  .ct-v210 .brand-title{font-size:31px}
+  .ct-home-dark{padding:6px 8px 8px;min-height:calc(100dvh - 90px)}
+  .ct-home-panel{margin-bottom:5px}
+  .ct-live-empty{min-height:48px}
+  .ct-registration-grid{margin-bottom:5px}
+  .ct-registration-card{min-height:84px;padding:8px}
+  .ct-login-grid{margin-bottom:5px}
+  .ct-login-tile{min-height:78px;padding:7px}
+  .ct-superadmin-bar{margin-bottom:4px;padding:6px 9px}
+  .ct-home-secure{padding:2px 4px 4px}
+}

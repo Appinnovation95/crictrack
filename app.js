@@ -241,7 +241,8 @@ function teamDashboard(user,team){
   document.getElementById('teamSquad').onclick=()=>teamSquadPage(user,team);
   document.getElementById('teamLiveScoring').onclick=()=>teamLiveScoringPage(user,team);
   document.getElementById('teamMatches').onclick=()=>teamMatchesPage(user,team);
-  ['teamStatistics','teamOpponents','teamReports','teamSettings'].forEach(id=>{document.getElementById(id).onclick=()=>alert(document.getElementById(id).querySelector('strong').textContent+' module is being connected in the next phase.');});
+  document.getElementById('teamStatistics').onclick=()=>teamStatisticsPage(user,team);
+  ['teamOpponents','teamReports','teamSettings'].forEach(id=>{document.getElementById(id).onclick=()=>alert(document.getElementById(id).querySelector('strong').textContent+' module is being connected in the next phase.');});
 }
 
 
@@ -407,13 +408,53 @@ async function teamCreateMatchPage(user,team){
 }
 
 async function teamMatchesPage(user,team){
-  teamModuleShell(team,'MATCHES','Live and completed matches with saved results and scorecards.',`<div id="teamMatchList" class="ct-match-history"><div class="loading-card">Loading matches…</div></div>`);
+  teamModuleShell(team,'MATCHES','Live and completed matches with saved results and scorecards.',`<div class="ct-match-history-tools"><button data-filter="all" class="active">ALL</button><button data-filter="live">LIVE</button><button data-filter="completed">COMPLETED</button></div><div id="teamMatchSummary" class="ct-match-summary"></div><div id="teamMatchList" class="ct-match-history"><div class="loading-card">Loading matches…</div></div>`);
   const box=document.getElementById('teamMatchList');
   try{
     const snap=await getDocs(collection(db,'teams',team.teamId,'matches'));
     const arr=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-    box.innerHTML=arr.length?arr.map(m=>{const inn=m.inningsData||[];const a=inn[0],b=inn[1];return `<article class="ct-history-card"><div><span class="ct-history-status ${m.status==='completed'?'done':'live'}">${esc((m.status||'live').toUpperCase())}</span><h3>${esc(m.teamAName||team.name)} vs ${esc(m.teamBName||'Opponent')}</h3><p>${esc(m.date||'')} • ${esc(m.venue||'')} • ${esc(m.overs||'')} overs</p>${a?`<strong>${esc(a.battingTeamName)} ${a.runs}/${a.wickets} (${Math.floor((a.legalBalls||0)/6)}.${(a.legalBalls||0)%6})</strong>`:''}${b?`<strong>${esc(b.battingTeamName)} ${b.runs}/${b.wickets} (${Math.floor((b.legalBalls||0)/6)}.${(b.legalBalls||0)%6})</strong>`:''}<small>${esc(m.resultText||'')}</small></div><button data-open-match="${esc(m.id)}">${m.status==='completed'?'SCORECARD':'OPEN LIVE'}</button></article>`}).join(''):'<div class="empty-state"><strong>No matches yet</strong><span>Create your first match to begin.</span></div>';
-    box.querySelectorAll('[data-open-match]').forEach(b=>b.onclick=()=>teamLiveScoringPage(user,team,b.dataset.openMatch));
+    const summary=document.getElementById('teamMatchSummary');const liveCount=arr.filter(m=>m.status==='live').length,doneCount=arr.filter(m=>m.status==='completed').length;summary.innerHTML=`<div><b>${arr.length}</b><span>Total</span></div><div><b>${liveCount}</b><span>Live</span></div><div><b>${doneCount}</b><span>Completed</span></div>`;
+    const renderList=(filter='all')=>{const view=filter==='all'?arr:arr.filter(m=>m.status===filter);box.innerHTML=view.length?view.map(m=>{const inn=m.inningsData||[];const a=inn[0],b=inn[1];return `<article class="ct-history-card"><div><span class="ct-history-status ${m.status==='completed'?'done':'live'}">${esc((m.status||'live').toUpperCase())}</span><h3>${esc(m.teamAName||team.name)} vs ${esc(m.teamBName||'Opponent')}</h3><p>${esc(m.date||'')} • ${esc(m.venue||'')} • ${esc(m.overs||'')} overs</p>${a?`<strong>${esc(a.battingTeamName)} ${a.runs}/${a.wickets} (${Math.floor((a.legalBalls||0)/6)}.${(a.legalBalls||0)%6})</strong>`:''}${b?`<strong>${esc(b.battingTeamName)} ${b.runs}/${b.wickets} (${Math.floor((b.legalBalls||0)/6)}.${(b.legalBalls||0)%6})</strong>`:''}<small>${esc(m.resultText||'')}</small></div><button data-open-match="${esc(m.id)}">${m.status==='completed'?'VIEW SCORECARD':'OPEN LIVE'}</button></article>`}).join(''):'<div class="empty-state"><strong>No matches here</strong><span>No matches match this filter.</span></div>';box.querySelectorAll('[data-open-match]').forEach(b=>b.onclick=()=>teamLiveScoringPage(user,team,b.dataset.openMatch));};
+    renderList();document.querySelectorAll('[data-filter]').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderList(btn.dataset.filter);});
+  }catch(ex){box.innerHTML=`<div class="error visible">${esc(friendlyError(ex))}</div>`;}
+}
+
+
+async function teamStatisticsPage(user,team){
+  teamModuleShell(team,'STATISTICS','Completed-match performance, batting leaders and bowling leaders.',`<div id="teamStatsBody" class="ct-stats-page"><div class="loading-card">Calculating team statistics…</div></div>`);
+  const box=document.getElementById('teamStatsBody');
+  try{
+    const snap=await getDocs(collection(db,'teams',team.teamId,'matches'));
+    const matches=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const completed=matches.filter(m=>m.status==='completed');
+    let wins=0,losses=0,ties=0,runsFor=0,runsAgainst=0,wickets=0;
+    const batting={},bowling={};
+    for(const m of completed){
+      const result=String(m.resultText||'');
+      if(/tied/i.test(result))ties++;
+      else if(result.toLowerCase().startsWith(String(team.name||team.teamId).toLowerCase()+ ' won'))wins++;
+      else if(/ won by /i.test(result))losses++;
+      for(const inn of (m.inningsData||[])){
+        if(inn.battingTeamId===team.teamId){
+          runsFor+=Number(inn.runs||0);
+          Object.values(inn.batters||{}).forEach(b=>{const key=b.name||'Player';const x=batting[key]||(batting[key]={name:key,matches:0,runs:0,balls:0,fours:0,sixes:0,outs:0,high:0});x.matches++;x.runs+=Number(b.runs||0);x.balls+=Number(b.balls||0);x.fours+=Number(b.fours||0);x.sixes+=Number(b.sixes||0);x.outs+=b.out?1:0;x.high=Math.max(x.high,Number(b.runs||0));});
+        }else{
+          runsAgainst+=Number(inn.runs||0);
+          Object.values(inn.bowlers||{}).forEach(b=>{const key=b.name||'Player';const x=bowling[key]||(bowling[key]={name:key,matches:0,balls:0,runs:0,wickets:0,wides:0,noBalls:0,bestW:0,bestR:9999});x.matches++;x.balls+=Number(b.balls||0);x.runs+=Number(b.runs||0);x.wickets+=Number(b.wickets||0);x.wides+=Number(b.wides||0);x.noBalls+=Number(b.noBalls||0);if(Number(b.wickets||0)>x.bestW||(Number(b.wickets||0)===x.bestW&&Number(b.runs||0)<x.bestR)){x.bestW=Number(b.wickets||0);x.bestR=Number(b.runs||0);}});
+          wickets+=Object.values(inn.bowlers||{}).reduce((a,b)=>a+Number(b.wickets||0),0);
+        }
+      }
+    }
+    const batLeaders=Object.values(batting).sort((a,b)=>b.runs-a.runs).slice(0,10);
+    const bowlLeaders=Object.values(bowling).sort((a,b)=>b.wickets-a.wickets||a.runs-b.runs).slice(0,10);
+    const winPct=completed.length?((wins/completed.length)*100).toFixed(1):'0.0';
+    box.innerHTML=`
+      <div class="ct-stats-summary">
+        <div><b>${completed.length}</b><span>Completed</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${losses}</b><span>Losses</span></div><div><b>${ties}</b><span>Ties</span></div><div><b>${winPct}%</b><span>Win Rate</span></div><div><b>${wickets}</b><span>Wickets</span></div>
+      </div>
+      <div class="ct-stats-panels"><section><h3>TEAM PERFORMANCE</h3><div class="ct-stat-line"><span>Runs Scored</span><b>${runsFor}</b></div><div class="ct-stat-line"><span>Runs Conceded</span><b>${runsAgainst}</b></div><div class="ct-stat-line"><span>Net Runs</span><b>${runsFor-runsAgainst}</b></div><div class="ct-stat-line"><span>Matches Stored</span><b>${matches.length}</b></div></section>
+      <section><h3>BATTING LEADERS</h3>${batLeaders.length?batLeaders.map((x,i)=>`<div class="ct-leader-row"><b>${i+1}</b><span><strong>${esc(x.name)}</strong><small>${x.runs} runs • HS ${x.high} • SR ${x.balls?((x.runs/x.balls)*100).toFixed(1):'0.0'} • 4s ${x.fours} • 6s ${x.sixes}</small></span></div>`).join(''):'<p class="ct-no-data">No completed batting data yet.</p>'}</section>
+      <section><h3>BOWLING LEADERS</h3>${bowlLeaders.length?bowlLeaders.map((x,i)=>`<div class="ct-leader-row"><b>${i+1}</b><span><strong>${esc(x.name)}</strong><small>${x.wickets} wickets • Best ${x.bestW}/${x.bestR===9999?0:x.bestR} • Eco ${x.balls?((x.runs*6)/x.balls).toFixed(2):'0.00'} • WD ${x.wides} • NB ${x.noBalls}</small></span></div>`).join(''):'<p class="ct-no-data">No completed bowling data yet.</p>'}</section></div>`;
   }catch(ex){box.innerHTML=`<div class="error visible">${esc(friendlyError(ex))}</div>`;}
 }
 

@@ -171,3 +171,21 @@ body{background:linear-gradient(180deg,#03162f 0 30%,#eef4ff 30% 100%)}
 
 @media(max-width:560px){.ct-dashboard-shell{padding:9px 8px 12px}.ct-dash-hero{padding:14px;border-radius:18px;margin-bottom:8px}.ct-dash-hero h2{font-size:22px}.ct-dash-hero p{font-size:9px}.ct-dash-logout{padding:7px 9px;font-size:8px}.ct-dash-stats{margin-bottom:8px;border-radius:15px}.ct-dash-stats>div{padding:10px 3px}.ct-dash-stats b{font-size:20px}.ct-dash-stats span{font-size:7px}.ct-dash-title{margin-bottom:7px}.ct-dash-title strong{font-size:12px}.ct-dash-title span{font-size:7px}.ct-dash-grid{gap:8px}.ct-dash-card{min-height:105px;border-radius:15px;padding:10px;grid-template-columns:40px 1fr;gap:4px 8px}.ct-dash-card>div{width:38px;height:38px;font-size:19px}.ct-dash-card strong{font-size:12px}.ct-dash-card small{font-size:7.5px}.ct-dash-secure{margin-top:8px;padding:7px}.ct-dash-empty{min-height:190px}.ct-dash-empty strong{font-size:17px}.ct-dash-empty span{font-size:9px}}
 @media(max-width:380px){.ct-dash-card strong{font-size:11px}.ct-dash-card small{font-size:7px}.ct-dash-card{min-height:100px}.ct-dash-hero h2{font-size:20px}}
+
+/* CricTrack v2.5.0 — team-owned dashboard */
+.ct-team-name-hero .premium-brand{position:relative;padding-right:76px}
+.ct-team-brand-title{font-size:clamp(36px,9vw,64px)!important;line-height:.92!important;margin:0!important}
+.ct-team-brand-title span{color:#fff!important;font-style:italic;font-weight:950;letter-spacing:-2px;text-shadow:0 3px 14px rgba(0,0,0,.3)}
+.ct-team-id-head{display:block;color:#bcd6ff;font-size:10px;font-weight:800;margin-top:4px;letter-spacing:.3px}
+.ct-team-head-logout{position:absolute;right:14px;top:50%;transform:translateY(-50%)}
+.ct-team-dashboard-v250{padding-top:12px}
+.ct-team-dashboard-v250 .ct-clean-stats b{font-size:12px;color:#5ef06c;letter-spacing:.4px}
+.ct-team-dashboard-v250 .ct-clean-stats span{font-size:10px}
+.ct-team-dashboard-v250 .ct-dash-title strong{font-size:18px}
+.ct-team-dashboard-v250 .ct-dash-title span{font-size:10px}
+.ct-team-dashboard-v250 .ct-dash-card{background:linear-gradient(135deg,#147fe0,#064eb4)!important;border-color:#4fb1ff!important;grid-template-columns:1fr;min-height:132px;padding:18px;align-content:center;text-align:center;gap:10px}
+.ct-team-dashboard-v250 .ct-dash-card>div{display:none!important}
+.ct-team-dashboard-v250 .ct-dash-card strong{font-size:19px;line-height:1.08;letter-spacing:.15px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.2)}
+.ct-team-dashboard-v250 .ct-dash-card small{font-size:12px;line-height:1.35;color:#fff;opacity:.96}
+.ct-team-dashboard-v250 .ct-clean-secure{font-size:0;padding:12px}.ct-team-dashboard-v250 .ct-clean-secure strong{font-size:12px}.ct-team-dashboard-v250 .ct-clean-secure small{font-size:10px}
+@media(max-width:560px){.ct-team-name-hero .premium-brand{padding-right:68px}.ct-team-brand-title{font-size:38px!important}.ct-team-id-head{font-size:8px}.ct-team-dashboard-v250 .ct-dash-card{min-height:112px;padding:12px 8px}.ct-team-dashboard-v250 .ct-dash-card strong{font-size:16px}.ct-team-dashboard-v250 .ct-dash-card small{font-size:10px}.ct-team-dashboard-v250 .ct-dash-title strong{font-size:15px}.ct-team-dashboard-v250 .ct-dash-title span{font-size:8px}}

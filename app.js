@@ -3,12 +3,13 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='2.3.0';
+const VERSION='2.4.1';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
 const root=document.getElementById('app');
 let deferredInstallPrompt=null;
+let authRoutingPaused=false;
 
 const esc=(s='')=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const normalizeId=(v='')=>v.trim().toUpperCase().replace(/\s+/g,'-').replace(/[^A-Z0-9-]/g,'');
@@ -122,16 +123,19 @@ function teamRegistrationPage(){
 async function registerTeam(e){
   e.preventDefault();const btn=document.getElementById('regTeamBtn'),err=document.getElementById('regTeamError'),ok=document.getElementById('regTeamSuccess');err.style.display='none';ok.style.display='none';
   const teamId=normalizeId(document.getElementById('regTeamId').value),password=document.getElementById('regTeamPassword').value,confirm=document.getElementById('regTeamConfirm').value;
-  let created=null;
+  let created=null;authRoutingPaused=true;
   try{
     if(!/^[A-Z0-9-]{4,20}$/.test(teamId))throw new Error('Team ID must be 4–20 letters, numbers or hyphens.');if(password.length<8)throw new Error('Password must contain at least 8 characters.');if(password!==confirm)throw new Error('Passwords do not match.');
+    const existing=await getDoc(doc(db,'teams',teamId));if(existing.exists())throw new Error('This Team ID is already registered. Please choose another ID or use Team Login.');
     btn.disabled=true;btn.textContent='Creating secure team account…';created=(await createUserWithEmailAndPassword(auth,teamAuthEmail(teamId),password)).user;
-    const data={teamId,name:document.getElementById('regTeamName').value.trim(),city:document.getElementById('regTeamCity').value.trim(),managerName:document.getElementById('regTeamManager').value.trim(),mobile:document.getElementById('regTeamMobile').value.trim(),contactEmail:document.getElementById('regTeamEmail').value.trim(),status:'active',authUid:created.uid,registrationSource:'self-service',trialMatchesAllowed:1,trialMatchesUsed:0,subscriptionStatus:'trial',planId:'team-free-trial',schemaVersion:2,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
-    const batch=writeBatch(db);batch.set(doc(db,'teams',teamId),data);batch.set(doc(db,'users',created.uid),{uid:created.uid,role:'team',teamId,status:'active',schemaVersion:2,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});await batch.commit();
-    ok.innerHTML=`<strong>✅ Team registered successfully</strong><span>Team ID: <b>${esc(teamId)}</b></span><span>Your Team workspace is ready.</span><div class="ct-success-actions"><button type="button" id="saveTeamPdf">Save Registration PDF</button><button type="button" id="openTeamNow">Open Team Dashboard</button></div>`;ok.style.display='grid';
+    const data={teamId,name:document.getElementById('regTeamName').value.trim(),city:document.getElementById('regTeamCity').value.trim(),managerName:document.getElementById('regTeamManager').value.trim(),mobile:document.getElementById('regTeamMobile').value.trim(),contactEmail:document.getElementById('regTeamEmail').value.trim(),status:'active',authUid:created.uid,registrationSource:'self-service',trialMatchesAllowed:1,trialMatchesUsed:0,subscriptionStatus:'trial',planId:'team-free-trial',schemaVersion:3,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+    const userMap={uid:created.uid,role:'team',teamId,status:'active',schemaVersion:3,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+    const batch=writeBatch(db);batch.set(doc(db,'teams',teamId),data);batch.set(doc(db,'users',created.uid),userMap);await batch.commit();
+    ok.innerHTML=`<strong>✅ Team registered successfully</strong><span>Team ID: <b>${esc(teamId)}</b></span><span>Your secure login is ready now.</span><div class="ct-success-actions"><button type="button" id="saveTeamPdf">Save Registration PDF</button><button type="button" id="openTeamNow">Open Team Dashboard</button></div>`;ok.style.display='grid';
     document.getElementById('saveTeamPdf').onclick=()=>printRegistrationSummary('Team Registration',{Name:data.name,'Team ID':teamId,City:data.city,Manager:data.managerName,Mobile:data.mobile});
     document.getElementById('openTeamNow').onclick=()=>teamDashboard(created,data);
-  }catch(ex){if(created){try{await deleteUser(created);}catch{}}err.textContent=friendlyError(ex);err.style.display='block';}finally{btn.disabled=false;btn.textContent='REGISTER TEAM';}
+  }catch(ex){if(created){try{await deleteUser(created);}catch{}}err.textContent=friendlyError(ex);err.style.display='block';}
+  finally{authRoutingPaused=false;btn.disabled=false;btn.textContent='REGISTER TEAM';}
 }
 
 function tournamentRegistrationPage(){
@@ -148,16 +152,19 @@ function tournamentRegistrationPage(){
 }
 async function registerTournament(e){
   e.preventDefault();const btn=document.getElementById('regTourBtn'),err=document.getElementById('regTourError'),ok=document.getElementById('regTourSuccess');err.style.display='none';ok.style.display='none';
-  const tournamentId=normalizeId(document.getElementById('regTourId').value),password=document.getElementById('regTourPassword').value,confirm=document.getElementById('regTourConfirm').value;let created=null;
+  const tournamentId=normalizeId(document.getElementById('regTourId').value),password=document.getElementById('regTourPassword').value,confirm=document.getElementById('regTourConfirm').value;let created=null;authRoutingPaused=true;
   try{
     if(!/^[A-Z0-9-]{4,20}$/.test(tournamentId))throw new Error('Tournament ID must be 4–20 letters, numbers or hyphens.');if(password.length<8)throw new Error('Password must contain at least 8 characters.');if(password!==confirm)throw new Error('Passwords do not match.');
+    const existing=await getDoc(doc(db,'tournaments',tournamentId));if(existing.exists())throw new Error('This Tournament ID is already registered. Please choose another ID or use Tournament Login.');
     btn.disabled=true;btn.textContent='Creating tournament workspace…';created=(await createUserWithEmailAndPassword(auth,tournamentAuthEmail(tournamentId),password)).user;
-    const data={tournamentId,name:document.getElementById('regTourName').value.trim(),city:document.getElementById('regTourCity').value.trim(),organizerName:document.getElementById('regOrganizer').value.trim(),mobile:document.getElementById('regTourMobile').value.trim(),contactEmail:document.getElementById('regTourEmail').value.trim(),startDate:document.getElementById('regTourStart').value||'',status:'setup',authUid:created.uid,registrationSource:'self-service',subscriptionStatus:'inactive',paymentStatus:'not_paid',canSetup:true,canStartMatch:false,planId:null,schemaVersion:2,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
-    const batch=writeBatch(db);batch.set(doc(db,'tournaments',tournamentId),data);batch.set(doc(db,'users',created.uid),{uid:created.uid,role:'tournament',tournamentId,status:'active',schemaVersion:2,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});await batch.commit();
-    ok.innerHTML=`<strong>✅ Tournament registered successfully</strong><span>Tournament ID: <b>${esc(tournamentId)}</b></span><span>Your Tournament workspace is ready.</span><div class="ct-success-actions"><button type="button" id="saveTourPdf">Save Registration PDF</button><button type="button" id="openTourNow">Open Tournament Dashboard</button></div>`;ok.style.display='grid';
+    const data={tournamentId,name:document.getElementById('regTourName').value.trim(),city:document.getElementById('regTourCity').value.trim(),organizerName:document.getElementById('regOrganizer').value.trim(),mobile:document.getElementById('regTourMobile').value.trim(),contactEmail:document.getElementById('regTourEmail').value.trim(),startDate:document.getElementById('regTourStart').value||'',status:'setup',authUid:created.uid,registrationSource:'self-service',subscriptionStatus:'inactive',paymentStatus:'not_paid',canSetup:true,canStartMatch:false,planId:null,schemaVersion:3,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+    const userMap={uid:created.uid,role:'tournament',tournamentId,status:'active',schemaVersion:3,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+    const batch=writeBatch(db);batch.set(doc(db,'tournaments',tournamentId),data);batch.set(doc(db,'users',created.uid),userMap);await batch.commit();
+    ok.innerHTML=`<strong>✅ Tournament registered successfully</strong><span>Tournament ID: <b>${esc(tournamentId)}</b></span><span>Your secure login is ready now.</span><div class="ct-success-actions"><button type="button" id="saveTourPdf">Save Registration PDF</button><button type="button" id="openTourNow">Open Tournament Dashboard</button></div>`;ok.style.display='grid';
     document.getElementById('saveTourPdf').onclick=()=>printRegistrationSummary('Tournament Registration',{Name:data.name,'Tournament ID':tournamentId,City:data.city,Organizer:data.organizerName,Mobile:data.mobile});
     document.getElementById('openTourNow').onclick=()=>tournamentDashboard(created,data);
-  }catch(ex){if(created){try{await deleteUser(created);}catch{}}err.textContent=friendlyError(ex);err.style.display='block';}finally{btn.disabled=false;btn.textContent='REGISTER TOURNAMENT';}
+  }catch(ex){if(created){try{await deleteUser(created);}catch{}}err.textContent=friendlyError(ex);err.style.display='block';}
+  finally{authRoutingPaused=false;btn.disabled=false;btn.textContent='REGISTER TOURNAMENT';}
 }
 function printRegistrationSummary(title,details){
   const rows=Object.entries(details).map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('');const w=window.open('','_blank');if(!w)return;
@@ -208,4 +215,4 @@ function tournamentDashboard(user,t){shell(`<main class="dashboard ct-dashboard-
 function scorerDashboard(user,u){shell(`<main class="dashboard premium-dashboard"><div class="topbar"><div><div class="admin-chip">🧑‍💻 SCORER</div><h2 class="section-title">My Matches</h2><p class="section-copy">Only matches assigned to this scorer will appear here.</p></div><button class="logout" id="scorerLogout">Logout</button></div><div class="empty-state"><div>🏏</div><strong>No assigned matches yet</strong><span>Tournament Admin can assign multiple scorers to different simultaneous matches.</span></div></main>`,'SCORER • ASSIGNED MATCHES');document.getElementById('scorerLogout').onclick=async()=>{await signOut(auth);home();};}
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
-onAuthStateChanged(auth,async user=>{if(!user){home();return;}try{const a=await getDoc(doc(db,'admins',user.uid));if(a.exists()&&a.data().role==='superadmin')return adminDashboard(user);}catch{}try{const u=await getDoc(doc(db,'users',user.uid));if(u.exists()){const d=u.data();if(d.role==='team'){const s=await getDoc(doc(db,'teams',d.teamId));if(s.exists())return teamDashboard(user,s.data());}if(d.role==='tournament'){const s=await getDoc(doc(db,'tournaments',d.tournamentId));if(s.exists())return tournamentDashboard(user,s.data());}if(d.role==='scorer')return scorerDashboard(user,d);}}catch{}await signOut(auth).catch(()=>{});home();});
+onAuthStateChanged(auth,async user=>{if(authRoutingPaused)return;if(!user){home();return;}try{const a=await getDoc(doc(db,'admins',user.uid));if(a.exists()&&a.data().role==='superadmin')return adminDashboard(user);}catch{}try{const u=await getDoc(doc(db,'users',user.uid));if(u.exists()){const d=u.data();if(d.role==='team'){const s=await getDoc(doc(db,'teams',d.teamId));if(s.exists())return teamDashboard(user,s.data());}if(d.role==='tournament'){const s=await getDoc(doc(db,'tournaments',d.tournamentId));if(s.exists())return tournamentDashboard(user,s.data());}if(d.role==='scorer')return scorerDashboard(user,d);}}catch{}await signOut(auth).catch(()=>{});home();});

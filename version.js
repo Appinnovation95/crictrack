@@ -1,1 +1,1 @@
-export const CRICTRACK_VERSION = '1.4.0';
+export const CRICTRACK_VERSION = '2.0.0';

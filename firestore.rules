@@ -229,7 +229,30 @@ service cloud.firestore {
 
     match /publicMatches/{matchId} {
       allow read: if true;
-      allow create, update, delete: if isSuperAdmin();
+
+      // Team owners may publish only their own sanitized public match document.
+      allow create: if isSuperAdmin()
+        || (
+          isSignedIn()
+          && request.resource.data.ownerTeamId is string
+          && isTeamOwner(request.resource.data.ownerTeamId)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.matchId == matchId
+          && request.resource.data.status in ['live','completed']
+        );
+
+      allow update: if isSuperAdmin()
+        || (
+          isSignedIn()
+          && resource.data.ownerTeamId is string
+          && isTeamOwner(resource.data.ownerTeamId)
+          && request.resource.data.ownerTeamId == resource.data.ownerTeamId
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.matchId == resource.data.matchId
+          && request.resource.data.status in ['live','completed']
+        );
+
+      allow delete: if isSuperAdmin();
     }
 
     match /matches/{matchId} {

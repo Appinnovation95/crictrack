@@ -25,18 +25,15 @@
     #ctVideoIntro::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 52px rgba(0,16,55,.24)}
     #ctIntroSkip{position:absolute;z-index:5;right:18.5%;bottom:6.7%;min-width:72px;height:44px;padding:0 18px;border:1px solid rgba(255,255,255,.78);border-radius:999px;background:linear-gradient(180deg,#ff3b45 0%,#d51420 100%);color:#fff;font:800 13px/1 system-ui,-apple-system,Segoe UI,sans-serif;letter-spacing:.08em;box-shadow:0 8px 24px rgba(214,20,32,.36),inset 0 1px 0 rgba(255,255,255,.25);text-shadow:0 1px 1px rgba(0,0,0,.22);cursor:pointer}
     #ctIntroSkip:active{transform:scale(.96)}
-    #ctIntroSoundHint{position:absolute;z-index:4;left:50%;bottom:2.2%;transform:translateX(-50%);padding:7px 11px;border-radius:999px;background:rgba(1,10,28,.58);border:1px solid rgba(95,181,255,.25);color:#a9d9ff;font:600 10px/1 system-ui,sans-serif;letter-spacing:.04em;backdrop-filter:blur(8px);opacity:0;transition:opacity .2s ease;pointer-events:none;white-space:nowrap}
-    #ctIntroSoundHint.show{opacity:1}
     @media (max-width:420px){#ctIntroSkip{right:17.5%;bottom:6.4%;min-width:68px;height:42px;padding:0 16px;font-size:12px}}
   </style>
 </head>
 <body>
   <div id="ctVideoIntro" aria-hidden="true">
-    <video id="ctIntroVideo" autoplay playsinline preload="auto">
-      <source src="./crictrack-intro.mp4?v=411" type="video/mp4" />
+    <video id="ctIntroVideo" autoplay muted playsinline preload="auto">
+      <source src="./crictrack-intro.mp4?v=421" type="video/mp4" />
     </video>
     <button id="ctIntroSkip" type="button" aria-label="Skip intro">SKIP</button>
-    <div id="ctIntroSoundHint">Tap video for sound</div>
   </div>
   <div id="app"></div>
   <script type="module" src="./app.js"></script>

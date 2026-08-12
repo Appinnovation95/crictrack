@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='4.2.0';
+const VERSION='4.2.1';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -22,7 +22,6 @@ function bindCricTrackVideoIntro(){
   const intro=document.getElementById('ctVideoIntro');
   const video=document.getElementById('ctIntroVideo');
   const skip=document.getElementById('ctIntroSkip');
-  const hint=document.getElementById('ctIntroSoundHint');
   if(!intro || !video) return;
   let finished=false;
   const finish=()=>{
@@ -32,39 +31,18 @@ function bindCricTrackVideoIntro(){
     intro.classList.add('is-closing');
     setTimeout(()=>intro.remove(),340);
   };
-  const tryAutoplay=async()=>{
-    video.volume=1;
-    video.muted=false;
-    try{
-      await video.play();
-    }catch(e){
-      try{
-        video.muted=true;
-        await video.play();
-        if(hint){hint.textContent='Tap video for sound';setTimeout(()=>{if(!finished)hint.classList.add('show');},700);}
-      }catch(err){
-        if(hint){hint.textContent='Tap video to start';hint.classList.add('show');}
-      }
-    }
-  };
-  const enableSound=async()=>{
-    if(finished) return;
-    try{
-      video.muted=false;
-      video.volume=1;
-      if(video.paused) await video.play();
-      if(hint) hint.classList.remove('show');
-    }catch(e){
-      if(hint){hint.textContent='Tap again for sound';hint.classList.add('show');}
-    }
-  };
+  video.muted=true;
+  video.playsInline=true;
+  video.preload='auto';
   video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('click',enableSound);
   video.addEventListener('error',finish,{once:true});
   if(skip) skip.addEventListener('click',e=>{e.stopPropagation();finish();});
+  const start=()=>video.play().catch(()=>{});
+  if(video.readyState>=3) start();
+  else video.addEventListener('canplay',start,{once:true});
   video.load();
-  tryAutoplay();
-  setTimeout(()=>{if(!finished && video.duration && video.currentTime>=video.duration-.1)finish();},12000);
+  setTimeout(()=>{if(!finished && video.paused) start();},350);
+  setTimeout(finish,11500);
 }
 bindCricTrackVideoIntro();
 

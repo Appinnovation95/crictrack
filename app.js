@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='4.0.6';
+const VERSION='4.1.1';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -21,32 +21,51 @@ const scorerAuthEmail=id=>`${normalizeId(id).toLowerCase()}@scorers.crictrack.ap
 function bindCricTrackVideoIntro(){
   const intro=document.getElementById('ctVideoIntro');
   const video=document.getElementById('ctIntroVideo');
-  const start=document.getElementById('ctIntroStart');
+  const skip=document.getElementById('ctIntroSkip');
+  const hint=document.getElementById('ctIntroSoundHint');
   if(!intro || !video) return;
   let finished=false;
   const finish=()=>{
     if(finished) return;
     finished=true;
+    try{video.pause();}catch{}
     intro.classList.add('is-closing');
-    setTimeout(()=>intro.remove(),420);
+    setTimeout(()=>intro.remove(),340);
   };
-  video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',()=>{ if(start){start.querySelector('span').textContent='Video could not load • tap to retry';} },{once:false});
-  video.muted=false; video.volume=1;
-  const playIntro=async()=>{
+  const tryAutoplay=async()=>{
+    video.volume=1;
+    video.muted=false;
     try{
-      video.currentTime=0; video.muted=false; video.volume=1;
       await video.play();
-      if(start){start.classList.add('is-hidden'); setTimeout(()=>start.remove(),250);}
     }catch(e){
-      if(start) start.querySelector('span').textContent='Tap again to play intro with sound';
+      try{
+        video.muted=true;
+        await video.play();
+        if(hint){hint.textContent='Tap video for sound';setTimeout(()=>{if(!finished)hint.classList.add('show');},700);}
+      }catch(err){
+        if(hint){hint.textContent='Tap video to start';hint.classList.add('show');}
+      }
     }
   };
-  if(start) start.addEventListener('click',playIntro);
+  const enableSound=async()=>{
+    if(finished) return;
+    try{
+      video.muted=false;
+      video.volume=1;
+      if(video.paused) await video.play();
+      if(hint) hint.classList.remove('show');
+    }catch(e){
+      if(hint){hint.textContent='Tap again for sound';hint.classList.add('show');}
+    }
+  };
+  video.addEventListener('ended',finish,{once:true});
+  video.addEventListener('click',enableSound);
+  video.addEventListener('error',finish,{once:true});
+  if(skip) skip.addEventListener('click',e=>{e.stopPropagation();finish();});
   video.load();
-  setTimeout(()=>{ if(!finished && video.ended) finish(); },30000);
+  tryAutoplay();
+  setTimeout(()=>{if(!finished && video.duration && video.currentTime>=video.duration-.1)finish();},12000);
 }
-
 bindCricTrackVideoIntro();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;document.querySelectorAll('[data-install]').forEach(b=>b.hidden=false);});

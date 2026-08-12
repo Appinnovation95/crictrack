@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='4.2.1';
+const VERSION='4.2.2';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -23,26 +23,49 @@ function bindCricTrackVideoIntro(){
   const video=document.getElementById('ctIntroVideo');
   const skip=document.getElementById('ctIntroSkip');
   if(!intro || !video) return;
-  let finished=false;
+  let finished=false, started=false;
   const finish=()=>{
     if(finished) return;
     finished=true;
     try{video.pause();}catch{}
     intro.classList.add('is-closing');
-    setTimeout(()=>intro.remove(),340);
+    setTimeout(()=>intro.remove(),300);
   };
-  video.muted=true;
-  video.playsInline=true;
-  video.preload='auto';
+  const enableSound=()=>{
+    if(finished) return;
+    try{video.muted=false;video.volume=1;}catch{}
+  };
+  const start=async()=>{
+    if(started||finished) return;
+    started=true;
+    video.playsInline=true;
+    video.preload='auto';
+    video.muted=false;
+    video.volume=1;
+    try{
+      await video.play();
+    }catch{
+      // Mobile browsers can block sound autoplay. Keep playback smooth,
+      // then enable sound on the first natural touch without extra UI.
+      video.muted=true;
+      try{await video.play();}catch{started=false;return;}
+    }
+    requestAnimationFrame(()=>{video.style.opacity='1';});
+  };
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',finish,{once:true});
-  if(skip) skip.addEventListener('click',e=>{e.stopPropagation();finish();});
-  const start=()=>video.play().catch(()=>{});
-  if(video.readyState>=3) start();
-  else video.addEventListener('canplay',start,{once:true});
-  video.load();
-  setTimeout(()=>{if(!finished && video.paused) start();},350);
-  setTimeout(finish,11500);
+  if(skip) skip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();finish();});
+  intro.addEventListener('pointerdown',e=>{if(e.target!==skip) enableSound();},{passive:true});
+  video.addEventListener('playing',()=>{video.style.opacity='1';},{once:true});
+  video.addEventListener('canplaythrough',start,{once:true});
+  if(video.readyState>=4) start();
+  else{
+    video.load();
+    // Avoid a long blank wait on conservative browsers.
+    setTimeout(()=>{if(!started&&video.readyState>=3) start();},900);
+    setTimeout(()=>{if(!started) start();},1600);
+  }
+  setTimeout(finish,12000);
 }
 bindCricTrackVideoIntro();
 

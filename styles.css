@@ -294,17 +294,20 @@ body{background:linear-gradient(180deg,#03162f 0 30%,#eef4ff 30% 100%)}
 @media (prefers-reduced-motion:reduce){.ct-cinematic-intro{display:none}}
 
 
-/* CricTrack v4.0.2 — approved logo -> slow-motion quote poster intro */
-.ct-simple-intro{position:fixed;inset:0;z-index:2147483646;overflow:hidden;background:#010817;opacity:1;transition:opacity .65s ease;isolation:isolate}
+/* CricTrack v4.0.3 — premium 3-second blue quote intro, no logo duplication */
+.ct-simple-intro{position:fixed;inset:0;z-index:2147483646;overflow:hidden;background:#010817;opacity:1;transition:opacity .5s cubic-bezier(.22,.8,.2,1);isolation:isolate}
 .ct-simple-intro.is-closing{opacity:0;pointer-events:none}
-.ct-simple-logo-stage,.ct-simple-poster-stage{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity .7s ease;background:#010817}
-.ct-simple-logo-stage.is-visible,.ct-simple-poster-stage.is-visible{opacity:1}
-.ct-simple-logo-stage{z-index:2}
-.ct-simple-logo-glow{position:absolute;width:min(58vw,280px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(31,142,255,.30),rgba(0,78,200,.11) 42%,transparent 70%);filter:blur(12px);animation:ctSimpleGlow 1.8s ease-in-out infinite alternate}
-.ct-simple-logo{width:min(31vw,142px);height:auto;border-radius:27%;position:relative;z-index:1;filter:drop-shadow(0 0 15px rgba(75,178,255,.95)) drop-shadow(0 0 34px rgba(0,101,255,.55));animation:ctSimpleLogo 1.45s cubic-bezier(.18,.78,.2,1) both}
-.ct-simple-poster-stage{z-index:1;background:#010817}
-.ct-simple-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;transform:scale(1.035);filter:saturate(1.04) contrast(1.025);will-change:transform;animation:ctSimplePoster 4.6s cubic-bezier(.18,.65,.2,1) both}
-@keyframes ctSimpleLogo{0%{opacity:0;transform:scale(.82)}35%{opacity:1;transform:scale(1.035)}100%{opacity:1;transform:scale(1)}}
-@keyframes ctSimpleGlow{from{opacity:.62;transform:scale(.92)}to{opacity:1;transform:scale(1.08)}}
-@keyframes ctSimplePoster{from{transform:scale(1.045)}to{transform:scale(1.005)}}
-@media (prefers-reduced-motion:reduce){.ct-simple-logo,.ct-simple-logo-glow,.ct-simple-poster{animation:none!important}.ct-simple-intro,.ct-simple-logo-stage,.ct-simple-poster-stage{transition-duration:.15s!important}}
+.ct-premium-poster-stage{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 50% 42%,#06265e 0%,#020b1c 55%,#01040d 100%);opacity:0;transform:scale(1.015);transition:opacity .3s ease}
+.ct-simple-intro.is-ready .ct-premium-poster-stage{opacity:1}
+.ct-simple-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;transform:scale(1.075);filter:saturate(1.12) contrast(1.08) brightness(.99);will-change:transform,filter;animation:ctPremiumPosterMove 3.05s cubic-bezier(.18,.72,.22,1) both}
+.ct-premium-blue-aura{position:absolute;inset:-15%;z-index:2;pointer-events:none;background:radial-gradient(circle at 50% 58%,rgba(33,145,255,.18),transparent 34%),linear-gradient(180deg,rgba(5,42,104,.14),transparent 25%,transparent 74%,rgba(0,44,126,.12));mix-blend-mode:screen;animation:ctBlueBreath 1.6s ease-in-out infinite alternate}
+.ct-premium-vignette{position:absolute;inset:0;z-index:3;pointer-events:none;box-shadow:inset 0 0 95px rgba(0,0,0,.56),inset 0 -80px 100px rgba(0,4,18,.34);background:linear-gradient(180deg,rgba(0,8,30,.05),transparent 18%,transparent 82%,rgba(0,5,20,.1))}
+.ct-premium-sheen{position:absolute;z-index:4;top:-20%;left:-55%;width:42%;height:145%;pointer-events:none;background:linear-gradient(105deg,transparent 0%,rgba(92,190,255,.02) 36%,rgba(135,217,255,.13) 50%,rgba(49,139,255,.035) 64%,transparent 100%);filter:blur(8px);transform:skewX(-10deg);animation:ctPremiumSheen 3s ease-in-out both}
+@keyframes ctPremiumPosterMove{0%{transform:scale(1.075);filter:saturate(1.08) contrast(1.06) brightness(.94)}35%{filter:saturate(1.13) contrast(1.08) brightness(1.01)}100%{transform:scale(1.015);filter:saturate(1.12) contrast(1.08) brightness(1)}}
+@keyframes ctBlueBreath{from{opacity:.56;transform:scale(.98)}to{opacity:1;transform:scale(1.025)}}
+@keyframes ctPremiumSheen{0%{left:-55%;opacity:0}22%{opacity:.8}72%{opacity:.5}100%{left:118%;opacity:0}}
+@media (prefers-reduced-motion:reduce){.ct-simple-poster,.ct-premium-blue-aura,.ct-premium-sheen{animation:none!important}.ct-simple-intro,.ct-premium-poster-stage{transition-duration:.15s!important}}
+
+/* v4.1.0 Premium opponent identity */
+.ct-opponent-logo-preview{margin:10px 0 14px}.ct-opponent-logo-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:linear-gradient(135deg,rgba(10,58,132,.96),rgba(10,111,226,.92));border:1px solid rgba(111,181,255,.45);box-shadow:0 12px 28px rgba(0,72,180,.2)}.ct-opponent-logo-card img{width:58px;height:58px;object-fit:contain;border-radius:14px;background:#fff;padding:4px}.ct-opponent-logo-card div{flex:1}.ct-opponent-logo-card strong{display:block;color:#fff;font-size:14px;letter-spacing:.5px}.ct-opponent-logo-card span{display:block;color:#dcecff;font-size:11px;margin-top:3px}.ct-opponent-logo-card button,.ct-mini-player-actions button,.ct-opponent-library-actions button{border:0;border-radius:10px;padding:8px 10px;font-weight:800;background:#fff;color:#0b4fa8}.ct-mini-player.premium{grid-template-columns:auto 1fr auto;align-items:center}.ct-mini-player-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.ct-mini-player small{display:block;color:#85b8ff;margin-top:3px;font-size:10px}.ct-opponent-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0 14px}.ct-opponent-library-card{padding:12px;border-radius:18px;background:linear-gradient(145deg,#0b2f67,#0b58b3);border:1px solid rgba(100,176,255,.42);box-shadow:0 10px 24px rgba(0,44,112,.22)}.ct-opponent-library-head{display:flex;align-items:center;gap:10px}.ct-opponent-library-head img,.ct-opponent-logo-fallback{width:48px;height:48px;border-radius:14px;background:#fff;object-fit:contain;padding:3px;display:grid;place-items:center;font-weight:900;color:#0a4b9f;font-size:22px}.ct-opponent-library-head strong{display:block;color:#fff;font-size:14px}.ct-opponent-library-head span{display:block;color:#cfe5ff;font-size:11px;margin-top:3px}.ct-opponent-library-actions{margin-top:10px}.ct-opponent-library-actions button{width:100%}
+@media(max-width:520px){.ct-opponent-library-grid{grid-template-columns:1fr}.ct-mini-player-actions{width:100%;justify-content:flex-start}.ct-mini-player.premium{grid-template-columns:auto 1fr}.ct-mini-player-actions{grid-column:1/-1}.ct-opponent-logo-card{align-items:flex-start;flex-wrap:wrap}}

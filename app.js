@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='4.0.2';
+const VERSION='4.0.4';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -18,44 +18,25 @@ const tournamentAuthEmail=id=>`${normalizeId(id).toLowerCase()}@tournaments.cric
 const scorerAuthEmail=id=>`${normalizeId(id).toLowerCase()}@scorers.crictrack.app`;
 
 
-function showCricTrackIntro(){
-  if(document.getElementById('ctSimpleIntro')) return;
-  const intro=document.createElement('div');
-  intro.id='ctSimpleIntro';
-  intro.className='ct-simple-intro';
-  intro.innerHTML=`
-    <div class="ct-simple-logo-stage is-visible">
-      <div class="ct-simple-logo-glow"></div>
-      <img src="./icon-192.png?v=402" class="ct-simple-logo" alt="CricTrack">
-    </div>
-    <div class="ct-simple-poster-stage">
-      <img src="./crictrack-quote-intro.png?v=402" class="ct-simple-poster" alt="Every run has a story. CricTrack remembers it.">
-    </div>`;
-  document.body.appendChild(intro);
-  const logoStage=intro.querySelector('.ct-simple-logo-stage');
-  const posterStage=intro.querySelector('.ct-simple-poster-stage');
-  const poster=intro.querySelector('.ct-simple-poster');
-  let started=false, finished=false;
+function bindCricTrackVideoIntro(){
+  const intro=document.getElementById('ctVideoIntro');
+  const video=document.getElementById('ctIntroVideo');
+  if(!intro || !video) return;
+  let finished=false;
   const finish=()=>{
-    if(finished) return; finished=true;
+    if(finished) return;
+    finished=true;
     intro.classList.add('is-closing');
-    setTimeout(()=>intro.remove(),700);
+    setTimeout(()=>intro.remove(),420);
   };
-  const revealPoster=()=>{
-    if(started) return; started=true;
-    logoStage.classList.remove('is-visible');
-    posterStage.classList.add('is-visible');
-    setTimeout(finish,3900);
-  };
-  // Decode/preload the approved poster first, so there is never a black gap.
-  const ready=poster.decode ? poster.decode() : new Promise((resolve)=>{
-    if(poster.complete) resolve(); else { poster.onload=resolve; poster.onerror=resolve; }
-  });
-  Promise.resolve(ready).catch(()=>{}).finally(()=>setTimeout(revealPoster,1450));
-  // Safety fallback for slow/offline devices; service worker also precaches this asset.
-  setTimeout(revealPoster,2600);
+  video.addEventListener('ended',finish,{once:true});
+  video.addEventListener('error',finish,{once:true});
+  video.addEventListener('canplay',()=>intro.classList.add('is-playing'),{once:true});
+  const playPromise=video.play();
+  if(playPromise && typeof playPromise.catch==='function') playPromise.catch(()=>finish());
+  setTimeout(finish,11500);
 }
-showCricTrackIntro();
+bindCricTrackVideoIntro();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;document.querySelectorAll('[data-install]').forEach(b=>b.hidden=false);});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;document.querySelectorAll('[data-install]').forEach(b=>b.hidden=true);});

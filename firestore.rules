@@ -221,6 +221,11 @@ service cloud.firestore {
 
       allow delete: if isSuperAdmin();
 
+      // v4.5.0 Tournament fixtures engine
+      match /fixtures/{fixtureId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
       // v4.3.0 Tournament team registration workspace
       match /registeredTeams/{registrationId} {
         allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);

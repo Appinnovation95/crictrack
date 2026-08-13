@@ -221,8 +221,37 @@ service cloud.firestore {
 
       allow delete: if isSuperAdmin();
 
-      // v4.5.0 Tournament fixtures engine
+      // v4.6.0 Tournament competition workspace.
+      // Explicit owner-only collections are pre-authorized for the planned tournament phases
+      // so normal feature patches do not require a Rules publish every time.
       match /fixtures/{fixtureId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /results/{resultId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /pointsTable/{rowId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /matches/{matchId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /knockouts/{nodeId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /statistics/{statId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /awards/{awardId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /venues/{venueId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /announcements/{announcementId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+      match /pdfExports/{exportId} {
         allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
       }
 

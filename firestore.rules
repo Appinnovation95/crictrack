@@ -265,6 +265,11 @@ service cloud.firestore {
       }
     }
 
+    // Platform-wide business configuration. Super Admin only.
+    match /platformConfig/{configId} {
+      allow read, create, update, delete: if isSuperAdmin();
+    }
+
     match /publicStats/{docId} {
       allow read: if true;
       allow write: if isSuperAdmin();

@@ -255,6 +255,40 @@ service cloud.firestore {
         allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
       }
 
+      // Future-ready organizer modules: prepared together to reduce repeated rule publishes.
+      match /certificates/{certificateId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
+      match /officials/{officialId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
+      match /sponsors/{sponsorId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
+      match /media/{mediaId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
+      match /settings/{settingId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
+      match /registrations/{registrationId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
+      match /payments/{paymentId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
+
+      match /auditLogs/{logId} {
+        allow get, list, create: if isSuperAdmin() || isTournamentOwner(tournamentId);
+        allow update, delete: if isSuperAdmin();
+      }
+
       // v4.3.0 Tournament team registration workspace
       match /registeredTeams/{registrationId} {
         allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);

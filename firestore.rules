@@ -80,7 +80,7 @@ service cloud.firestore {
     }
 
     match /teams/{teamId} {
-      allow get: if resource == null || isSuperAdmin() || isTeamOwner(teamId);
+      allow get: if resource == null || isSuperAdmin() || isTeamOwner(teamId) || (isSignedIn() && exists(userPath()) && get(userPath()).data.role == 'tournament' && get(userPath()).data.status == 'active');
       allow list: if isSuperAdmin();
 
       allow create: if isSuperAdmin()
@@ -220,6 +220,11 @@ service cloud.firestore {
         );
 
       allow delete: if isSuperAdmin();
+
+      // v4.3.0 Tournament team registration workspace
+      match /registeredTeams/{registrationId} {
+        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+      }
     }
 
     match /publicStats/{docId} {

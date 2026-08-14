@@ -13,28 +13,23 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
   <link rel="apple-touch-icon" href="./icon-192.png" />
-  <link rel="preload" as="video" href="./crictrack-intro.mp4?v=422" type="video/mp4" />
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./ui-foundation.css" />
 
 
   <style>
     html,body{margin:0;background:#010817}
-    #ctVideoIntro{position:fixed;inset:0;z-index:2147483647;background:#010817;overflow:hidden;opacity:1;transition:opacity .28s ease;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-    #ctVideoIntro.is-closing{opacity:0;pointer-events:none}
-    #ctIntroVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;background:#010817;opacity:0;transition:opacity .16s ease;will-change:opacity;transform:translateZ(0)}
-    #ctVideoIntro::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,24,82,.05),rgba(0,67,180,.04));box-shadow:inset 0 0 60px rgba(0,19,66,.22)}
-    #ctIntroSkip{position:absolute;z-index:8;right:7.8%;bottom:7.1%;width:62px;height:62px;padding:0;border:1px solid rgba(146,215,255,.9);border-radius:50%;background:radial-gradient(circle at 35% 25%,#43b8ff 0%,#1488ee 36%,#0757c8 72%,#043b93 100%);color:#fff;font:900 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;letter-spacing:.06em;box-shadow:0 0 10px rgba(52,176,255,.9),0 0 24px rgba(0,117,255,.72),0 10px 28px rgba(0,42,130,.38),inset 0 1px 0 rgba(255,255,255,.5);text-shadow:0 0 5px rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.35);cursor:pointer;transform:translateZ(0)}
-    #ctIntroSkip:active{transform:scale(.94)}
-    @media (max-width:420px){#ctIntroSkip{right:7.2%;bottom:7%;width:58px;height:58px;font-size:10px}}
+    #ctSplashIntro{position:fixed;inset:0;z-index:2147483647;background:radial-gradient(circle at 50% 42%,#0d5dbf 0,#062f69 24%,#02152f 58%,#010817 100%);display:grid;place-items:center;opacity:1;transition:opacity .26s ease;overflow:hidden}
+    #ctSplashIntro.is-closing{opacity:0;pointer-events:none}
+    #ctSplashIntro::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle,#2a9cff33 0,transparent 48%);animation:ctGlow 1.8s ease-in-out infinite alternate}
+    #ctSplashIcon{position:relative;width:min(42vw,190px);height:min(42vw,190px);object-fit:contain;border-radius:26%;filter:drop-shadow(0 0 18px #1c8fffaa) drop-shadow(0 0 42px #0a5fdc66);animation:ctIconIn .7s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes ctIconIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+    @keyframes ctGlow{from{transform:scale(.96);opacity:.65}to{transform:scale(1.06);opacity:1}}
   </style>
 </head>
 <body>
-  <div id="ctVideoIntro" aria-hidden="true">
-    <video id="ctIntroVideo" autoplay playsinline preload="auto">
-      <source src="./crictrack-intro.mp4?v=422" type="video/mp4" />
-    </video>
-    <button id="ctIntroSkip" type="button" aria-label="Skip intro">SKIP</button>
+  <div id="ctSplashIntro" aria-hidden="true">
+    <img id="ctSplashIcon" src="./icon-512.png" alt="" />
   </div>
   <div id="app"></div>
   <script type="module" src="./app.js"></script>

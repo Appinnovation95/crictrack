@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, de
 import { getFirestore, doc, getDoc, getDocs, collection, getCountFromServer, writeBatch, serverTimestamp, updateDoc, addDoc, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-const VERSION='5.2.0';
+const VERSION='5.2.2';
 const fbApp=initializeApp(firebaseConfig);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
@@ -18,56 +18,20 @@ const tournamentAuthEmail=id=>`${normalizeId(id).toLowerCase()}@tournaments.cric
 const scorerAuthEmail=id=>`${normalizeId(id).toLowerCase()}@scorers.crictrack.app`;
 
 
-function bindCricTrackVideoIntro(){
-  const intro=document.getElementById('ctVideoIntro');
-  const video=document.getElementById('ctIntroVideo');
-  const skip=document.getElementById('ctIntroSkip');
-  if(!intro || !video) return;
-  let finished=false, started=false;
+function bindCricTrackSplashIntro(){
+  const intro=document.getElementById('ctSplashIntro');
+  if(!intro) return;
+  let finished=false;
   const finish=()=>{
     if(finished) return;
     finished=true;
-    try{video.pause();}catch{}
     intro.classList.add('is-closing');
-    setTimeout(()=>intro.remove(),300);
+    setTimeout(()=>intro.remove(),260);
   };
-  const enableSound=()=>{
-    if(finished) return;
-    try{video.muted=false;video.volume=1;}catch{}
-  };
-  const start=async()=>{
-    if(started||finished) return;
-    started=true;
-    video.playsInline=true;
-    video.preload='auto';
-    video.muted=false;
-    video.volume=1;
-    try{
-      await video.play();
-    }catch{
-      // Mobile browsers can block sound autoplay. Keep playback smooth,
-      // then enable sound on the first natural touch without extra UI.
-      video.muted=true;
-      try{await video.play();}catch{started=false;return;}
-    }
-    requestAnimationFrame(()=>{video.style.opacity='1';});
-  };
-  video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',finish,{once:true});
-  if(skip) skip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();finish();});
-  intro.addEventListener('pointerdown',e=>{if(e.target!==skip) enableSound();},{passive:true});
-  video.addEventListener('playing',()=>{video.style.opacity='1';},{once:true});
-  video.addEventListener('canplaythrough',start,{once:true});
-  if(video.readyState>=4) start();
-  else{
-    video.load();
-    // Avoid a long blank wait on conservative browsers.
-    setTimeout(()=>{if(!started&&video.readyState>=3) start();},900);
-    setTimeout(()=>{if(!started) start();},1600);
-  }
-  setTimeout(finish,12000);
+  // Lightweight 2-second brand splash: no video decoding, no autoplay delay.
+  setTimeout(finish,2000);
 }
-bindCricTrackVideoIntro();
+bindCricTrackSplashIntro();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;document.querySelectorAll('[data-install]').forEach(b=>b.hidden=false);});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;document.querySelectorAll('[data-install]').forEach(b=>b.hidden=true);});
@@ -910,11 +874,27 @@ async function tournamentPdfStudio(user,t){
   document.getElementById('tourPdfBack').onclick=()=>tournamentDashboard(user,t);
   const safe=v=>esc(v==null?'—':String(v));
   const printDoc=(title,inside,landscape=false)=>{const w=window.open('','_blank');if(!w)return alert('Allow pop-ups to create the PDF.');const orientation=landscape?'landscape':'portrait';w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safe(title)}</title><style>@page{size:A4 ${orientation};margin:0}*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eaf2fb;color:#0a2340;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.page{width:${landscape?'297mm':'210mm'};height:${landscape?'210mm':'297mm'};min-height:0;padding:15mm;background:radial-gradient(circle at 85% 5%,#0d6dcc55,transparent 24%),linear-gradient(155deg,#020c1d,#06366c 55%,#08152a);color:#fff;position:relative;overflow:hidden}.brand{font-weight:1000;font-size:8mm;font-style:italic}.brand i{color:#168cff;font-style:italic}.tag{color:#74c8ff;font-size:3.3mm;font-weight:900;letter-spacing:1.4px}.hero{font-size:12mm;font-weight:1000;line-height:1.02;margin:5mm 0 2mm}.sub{color:#c5e4ff}.card{background:#fff;color:#0a2340;border-radius:5mm;padding:7mm;margin-top:7mm;box-shadow:0 4mm 12mm #0003}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4mm}.grid.three{grid-template-columns:repeat(3,1fr)}.box{background:#f3f8fe;border:1px solid #c9dff2;border-radius:3.5mm;padding:4.5mm}.box small{display:block;color:#607a91}.box b{display:block;color:#075fae;font-size:5mm;margin-top:1mm}.table{width:100%;border-collapse:collapse;margin-top:3mm;font-size:3.2mm}.table th{background:#0a5b9f;color:#fff;text-align:left;padding:2.5mm}.table td{padding:2.4mm;border-bottom:1px solid #dce7f0}.gold{background:linear-gradient(135deg,#7d5600,#1d1609)!important;color:#fff!important;border:1px solid #efc24f!important}.certificate{text-align:center;padding:9mm 15mm 13mm;break-inside:avoid;page-break-inside:avoid}.certificate .brand{font-size:7mm}.certificate .tag{font-size:2.8mm}.certificate .hero{font-size:9mm;margin:2.5mm 0 1mm}.certificate .sub{margin:1.5mm 0;font-size:3.2mm}.certificate .name{font-size:clamp(8mm,11mm,12mm);font-weight:1000;margin:3mm 0;color:#fff;line-height:1.05;overflow-wrap:anywhere}.certificate>p:not(.sub){margin:1.5mm 0 2.5mm;font-size:3.4mm}.certificate .seal{width:20mm;height:20mm;border-radius:50%;border:.7mm solid #e4b83e;display:grid;place-items:center;margin:3mm auto;font-size:9mm;background:#15243b}.certificate .card{padding:4mm;margin-top:3mm}.certificate .box{padding:3mm}.certificate .box b{font-size:4mm}.certificate .signature{display:grid;grid-template-columns:1fr 1fr;gap:20mm;margin-top:8mm}.signature{display:grid;grid-template-columns:1fr 1fr;gap:20mm;margin-top:14mm}.signature div{border-top:1px solid #97bad7;padding-top:2mm;color:#b8d7ef;font-size:3.2mm}.foot{position:absolute;left:15mm;right:15mm;bottom:6mm;border-top:1px solid #ffffff33;padding-top:3mm;color:#a8d2f4;font-size:3mm}.pill{display:inline-block;background:#0b6fd1;color:#fff;border-radius:99px;padding:2mm 4mm;font-weight:900;margin:1mm}.award{display:grid;grid-template-columns:14mm 1fr;gap:4mm;align-items:center;padding:4mm;border-bottom:1px solid #dfe8f0}.award .ico{font-size:8mm}.muted{color:#70879b}.pdf-ad-box{margin-top:6mm;border:1px solid #36a7ff;border-radius:4mm;padding:4mm 5mm;background:linear-gradient(135deg,#061b35,#0a4e8c);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:5mm}.pdf-ad-box b{display:block;color:#7dcbff;font-size:4mm}.pdf-ad-box span{display:block;margin-top:1mm;font-size:3mm;color:#d8ecff}.pdf-ad-box strong{text-align:right;font-size:3.5mm;line-height:1.45;color:#fff}@media print{html,body{width:100%;height:100%;overflow:hidden}.page{break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.certificate{break-inside:avoid!important;page-break-inside:avoid!important}}</style></head><body>${inside}<script>window.onload=()=>setTimeout(()=>window.print(),350);<\/script></body></html>`);w.document.close();};
+  const printFlowDoc=(title,inside)=>{const w=window.open('','_blank');if(!w)return alert('Allow pop-ups to create the PDF.');w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safe(title)}</title><style>@page{size:A4 portrait;margin:10mm 11mm}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#10233f;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.flow-book{width:100%;max-width:188mm;margin:0 auto}.book-cover{background:radial-gradient(circle at 88% 8%,#168cff66,transparent 28%),linear-gradient(145deg,#031329,#064e98 62%,#071b36);color:#fff;border-radius:6mm;padding:9mm 9mm 8mm;break-inside:avoid;page-break-inside:avoid}.brand{font-weight:1000;font-size:8mm;font-style:italic}.brand i{color:#168cff;font-style:italic}.tag{color:#8ed2ff;font-size:3mm;font-weight:900;letter-spacing:1.2px}.hero{font-size:10mm;font-weight:1000;line-height:1.02;margin:4mm 0 1.5mm}.sub{color:#d2eaff;font-size:3.5mm}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:3mm}.grid.three{grid-template-columns:repeat(3,1fr)}.box{background:#f4f9ff;border:1px solid #c8def2;border-radius:3.2mm;padding:3.5mm;break-inside:avoid;page-break-inside:avoid}.box small{display:block;color:#61798f;font-size:2.8mm}.box b{display:block;color:#075fae;font-size:4.5mm;margin-top:.8mm}.book-cover .box{background:#ffffff14;border-color:#7bc8ff55}.book-cover .box small{color:#a9dcff}.book-cover .box b{color:#fff}.flow-section{margin-top:5mm}.flow-section h2{margin:0 0 2.5mm;padding-bottom:1.8mm;border-bottom:.5mm solid #bcd5ea;color:#075796;font-size:5.5mm;break-after:avoid;page-break-after:avoid}.flow-section h3{margin:3.5mm 0 1.5mm;color:#17486f;font-size:4mm;break-after:avoid;page-break-after:avoid}.table{width:100%;border-collapse:collapse;font-size:2.9mm;margin:0 0 3mm}.table thead{display:table-header-group}.table th{background:#0a5b9f;color:#fff;text-align:left;padding:2.2mm}.table td{padding:2.1mm;border-bottom:1px solid #dce7f0;vertical-align:top}.table tr{break-inside:avoid;page-break-inside:avoid}.award{display:grid;grid-template-columns:12mm 1fr;gap:3mm;align-items:center;padding:3mm;border:1px solid #dce8f3;border-radius:3mm;margin-bottom:2mm;break-inside:avoid;page-break-inside:avoid}.award .ico{font-size:7mm}.gold{background:linear-gradient(135deg,#7d5600,#1d1609)!important;color:#fff!important;border:1px solid #efc24f!important}.muted{color:#70879b}.pdf-ad-box{margin-top:5mm;border:1px solid #36a7ff;border-radius:4mm;padding:4mm 5mm;background:linear-gradient(135deg,#061b35,#0a4e8c);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:5mm;break-inside:avoid;page-break-inside:avoid}.pdf-ad-box b{display:block;color:#7dcbff;font-size:4mm}.pdf-ad-box span{display:block;margin-top:1mm;font-size:3mm;color:#d8ecff}.pdf-ad-box strong{text-align:right;font-size:3.5mm;line-height:1.45;color:#fff}.book-footer{margin-top:6mm;border-top:1px solid #cbdbea;padding-top:2.5mm;text-align:center;color:#60758d;font-size:2.6mm;break-inside:avoid;page-break-inside:avoid}@media print{body{overflow:visible!important}.flow-book{max-width:none}.flow-section,.table{break-inside:auto;page-break-inside:auto}.box,.award,.pdf-ad-box,.book-cover{break-inside:avoid!important;page-break-inside:avoid!important}}</style></head><body><main class="flow-book">${inside}</main><script>window.onload=()=>setTimeout(()=>window.print(),350);<\/script></body></html>`);w.document.close();};
   const baseHead=()=>`<div class="brand">CRIC<i>TRACK</i></div><div class="tag">LOCAL CRICKET • PROFESSIONAL RECORDS</div>`;
   const foot=()=>`<div class="foot">CRICTRACK • Every Run Has a Story. CricTrack Remembers It. • A KSR ENTERPRISES PRODUCT</div>`;
   const tourInfo=()=>{const items=[['Tournament ID',tid],['City',t.city],['Organizer',t.organizerName],['Start Date',t.startDate]].filter(([,v])=>v!=null&&String(v).trim()&&String(v).trim().toLowerCase()!=='not set');return `<div class="grid">${items.map(([k,v])=>`<div class="box"><small>${safe(k)}</small><b>${safe(v)}</b></div>`).join('')}</div>`;};
   const ad=(type)=>pdfAdAllowed(pdfAds,type)?pdfAdHtml(pdfAds):'';
-  document.getElementById('tourCompleteBook').onclick=()=>{const teamRows=teams.map((x,i)=>`<tr><td>${i+1}</td><td>${safe(x.name||'Team')}</td><td>${safe(x.city||'—')}</td><td>${safe(x.managerName||x.contactName||'—')}</td></tr>`).join('');const fixtureRows=fixtures.map((f,i)=>`<tr><td>${safe(f.matchNo||i+1)}</td><td>${safe(f.teamAName||'Team A')} vs ${safe(f.teamBName||'Team B')}</td><td>${safe(f.date||'—')}</td><td>${safe(f.venue||'—')}</td></tr>`).join('');const resultRows=results.map((r,i)=>`<tr><td>${i+1}</td><td>${safe(r.teamAName||'Team A')} vs ${safe(r.teamBName||'Team B')}</td><td>${safe(r.resultText||r.winnerName||'Completed')}</td></tr>`).join('');const honours=awardRows.map(a=>`<div class="award"><div class="ico">${a.icon}</div><div><b>${safe(a.title)}</b><div>${safe(a.winnerName||'Not selected')}${a.teamName?' • '+safe(a.teamName):''}</div></div></div>`).join('');const body=`<section class="page">${baseHead()}<div class="hero">COMPLETE TOURNAMENT BOOK</div><div class="sub">${safe(t.name||tid)} • Official CricTrack Tournament Record</div><div class="card">${tourInfo()}<div class="grid three" style="margin-top:5mm"><div class="box"><small>Teams</small><b>${teams.length}</b></div><div class="box"><small>Fixtures</small><b>${fixtures.length}</b></div><div class="box"><small>Completed</small><b>${results.length}</b></div></div></div>${foot()}</section><section class="page">${baseHead()}<div class="hero">TEAMS & FIXTURES</div><div class="card"><h3>Registered Teams</h3><table class="table"><thead><tr><th>#</th><th>Team</th><th>City</th><th>Contact</th></tr></thead><tbody>${teamRows||'<tr><td colspan="4">No teams registered.</td></tr>'}</tbody></table><h3>Official Fixtures</h3><table class="table"><thead><tr><th>#</th><th>Match</th><th>Date</th><th>Venue</th></tr></thead><tbody>${fixtureRows||'<tr><td colspan="4">No fixtures saved.</td></tr>'}</tbody></table></div>${foot()}</section><section class="page">${baseHead()}<div class="hero">RESULTS & HONOURS</div><div class="card"><h3>Official Results</h3><table class="table"><thead><tr><th>#</th><th>Match</th><th>Result</th></tr></thead><tbody>${resultRows||'<tr><td colspan="3">No results saved.</td></tr>'}</tbody></table><h3>Tournament Honours</h3><div class="grid"><div class="box gold"><small>🏆 CHAMPION</small><b>${safe(champion||'Not decided')}</b></div><div class="box"><small>🥈 RUNNER-UP</small><b>${safe(runner||'Not decided')}</b></div></div>${honours}${ad('tournamentBook')}</div>${foot()}</section>`;printDoc(`${t.name}-Complete-Tournament-Book`,body);};
+  document.getElementById('tourCompleteBook').onclick=()=>{
+    const teamRows=teams.map((x,i)=>`<tr><td>${i+1}</td><td><b>${safe(x.name||'Team')}</b></td><td>${safe(x.city||'—')}</td><td>${safe(x.managerName||x.captainName||x.contactName||'—')}</td></tr>`).join('');
+    const fixtureRows=fixtures.map((f,i)=>`<tr><td>${safe(f.matchNo||i+1)}</td><td>${safe(f.teamAName||'Team A')} vs ${safe(f.teamBName||'Team B')}</td><td>${safe(f.date||f.matchDate||'—')}</td><td>${safe(f.time||f.startTime||'—')}</td><td>${safe(f.venue||'—')}</td><td>${safe(f.status||'scheduled')}</td></tr>`).join('');
+    const resultRows=results.map((r,i)=>`<tr><td>${i+1}</td><td>${safe(r.teamAName||'Team A')} vs ${safe(r.teamBName||'Team B')}</td><td>${safe(r.resultText||r.winnerName||r.outcome||'Completed')}</td></tr>`).join('');
+    const m={};teams.forEach(x=>m[x.id]={id:x.id,name:x.name||'Team',p:0,w:0,l:0,tie:0,pts:0,rf:0,ra:0});results.forEach(r=>{const a=m[r.teamAId],b=m[r.teamBId];if(!a||!b)return;a.p++;b.p++;a.rf+=Number(r.teamARuns||0);a.ra+=Number(r.teamBRuns||0);b.rf+=Number(r.teamBRuns||0);b.ra+=Number(r.teamARuns||0);if(r.outcome==='tie'||r.outcome==='no-result'){a.tie++;b.tie++;a.pts++;b.pts++;}else if(r.winnerId===a.id){a.w++;b.l++;a.pts+=2;}else if(r.winnerId===b.id){b.w++;a.l++;b.pts+=2;}});const standings=Object.values(m).sort((a,b)=>b.pts-a.pts||((b.rf-b.ra)-(a.rf-a.ra)));
+    const standingRows=standings.map((r,i)=>`<tr><td>${i+1}</td><td><b>${safe(r.name)}</b></td><td>${r.p}</td><td>${r.w}</td><td>${r.l}</td><td>${r.tie}</td><td><b>${r.pts}</b></td><td>${r.rf-r.ra>=0?'+':''}${r.rf-r.ra}</td></tr>`).join('');
+    const honours=awardRows.map(a=>`<div class="award"><div class="ico">${a.icon}</div><div><b>${safe(a.title)}</b><div>${safe(a.winnerName||'Not selected')}${a.teamName?' • '+safe(a.teamName):''}</div>${a.note?`<small class="muted">${safe(a.note)}</small>`:''}</div></div>`).join('');
+    const body=`<section class="book-cover">${baseHead()}<div class="hero">COMPLETE TOURNAMENT BOOK</div><div class="sub">${safe(t.name||tid)} • Official CricTrack Tournament Record</div><div style="margin-top:6mm">${tourInfo()}</div><div class="grid three" style="margin-top:4mm"><div class="box"><small>Teams</small><b>${teams.length}</b></div><div class="box"><small>Fixtures</small><b>${fixtures.length}</b></div><div class="box"><small>Completed</small><b>${results.length}</b></div></div></section>
+    <section class="flow-section"><h2>REGISTERED TEAMS</h2><table class="table"><thead><tr><th>#</th><th>Team</th><th>City</th><th>Captain / Manager</th></tr></thead><tbody>${teamRows||'<tr><td colspan="4">No teams registered.</td></tr>'}</tbody></table></section>
+    <section class="flow-section"><h2>OFFICIAL FIXTURES</h2><table class="table"><thead><tr><th>#</th><th>Match</th><th>Date</th><th>Time</th><th>Venue</th><th>Status</th></tr></thead><tbody>${fixtureRows||'<tr><td colspan="6">No fixtures saved.</td></tr>'}</tbody></table></section>
+    <section class="flow-section"><h2>OFFICIAL RESULTS</h2><table class="table"><thead><tr><th>#</th><th>Match</th><th>Result</th></tr></thead><tbody>${resultRows||'<tr><td colspan="3">No results saved.</td></tr>'}</tbody></table></section>
+    <section class="flow-section"><h2>POINTS TABLE</h2><table class="table"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>L</th><th>T/NR</th><th>Pts</th><th>Runs +/-</th></tr></thead><tbody>${standingRows||'<tr><td colspan="8">No standings available.</td></tr>'}</tbody></table></section>
+    <section class="flow-section"><h2>TOURNAMENT HONOURS</h2><div class="grid"><div class="box gold"><small>🏆 CHAMPION</small><b style="color:#fff">${safe(champion||'Not decided')}</b></div><div class="box"><small>🥈 RUNNER-UP</small><b>${safe(runner||'Not decided')}</b></div></div><h3>Individual Awards</h3>${honours}</section>
+    ${ad('tournamentBook')}<div class="book-footer">CRICTRACK • Every Run Has a Story. CricTrack Remembers It. • A KSR ENTERPRISES PRODUCT</div>`;
+    printFlowDoc(`${t.name}-Complete-Tournament-Book`,body);
+  };
   document.getElementById('tourProfilePdf').onclick=()=>printDoc(`${t.name}-Tournament-Profile`,`<section class="page">${baseHead()}<div class="hero">${safe(t.name||tid)}</div><div class="sub">Official CricTrack Tournament Profile</div><div class="card">${tourInfo()}<div class="grid three" style="margin-top:5mm"><div class="box"><small>Registered Teams</small><b>${teams.length}</b></div><div class="box"><small>Fixtures</small><b>${fixtures.length}</b></div><div class="box"><small>Completed</small><b>${results.length}</b></div></div><h3>Registered Teams</h3>${teams.map((x,i)=>`<span class="pill">${i+1}. ${safe(x.name||'Team')}</span>`).join('')||'<p class="muted">No teams registered.</p>'}${ad('profile')}</div>${foot()}</section>`);
   document.getElementById('tourFixturesPdf').onclick=()=>printDoc(`${t.name}-Fixtures`,`<section class="page">${baseHead()}<div class="hero">FIXTURES</div><div class="sub">${safe(t.name||tid)} • Official Schedule</div><div class="card"><table class="table"><thead><tr><th>#</th><th>Match</th><th>Date</th><th>Time</th><th>Venue</th><th>Status</th></tr></thead><tbody>${fixtures.map((f,i)=>`<tr><td>${i+1}</td><td>${safe(f.teamAName||f.teamA||'TBD')} vs ${safe(f.teamBName||f.teamB||'TBD')}</td><td>${safe(f.date||f.matchDate||'—')}</td><td>${safe(f.time||f.startTime||'—')}</td><td>${safe(f.venue||'—')}</td><td>${safe(f.status||'scheduled')}</td></tr>`).join('')||'<tr><td colspan="6">No fixtures saved.</td></tr>'}</tbody></table>${ad('fixtures')}</div>${foot()}</section>`,true);
   const calcRows=()=>{const m={};teams.forEach(x=>m[x.id]={id:x.id,name:x.name||'Team',p:0,w:0,l:0,t:0,pts:0,rf:0,ra:0});results.forEach(r=>{const a=m[r.teamAId],b=m[r.teamBId];if(!a||!b)return;a.p++;b.p++;a.rf+=Number(r.teamARuns||0);a.ra+=Number(r.teamBRuns||0);b.rf+=Number(r.teamBRuns||0);b.ra+=Number(r.teamARuns||0);if(r.outcome==='tie'||r.outcome==='no-result'){a.t++;b.t++;a.pts++;b.pts++;}else if(r.winnerId===a.id){a.w++;b.l++;a.pts+=2;}else if(r.winnerId===b.id){b.w++;a.l++;b.pts+=2;}});return Object.values(m).sort((a,b)=>b.pts-a.pts||((b.rf-b.ra)-(a.rf-a.ra)));};

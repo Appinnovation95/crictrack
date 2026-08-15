@@ -740,6 +740,7 @@ async function teamLiveScoringPage(user,team,preferredMatchId=''){
   const ready=()=>{
     if(match.status==='completed'){alert('This match is completed. Scoring is locked.');return false;}
     if(!inn.strikerId||!inn.nonStrikerId||!inn.bowlerId){alert('Select Striker, Non-Striker and Bowler first.');return false;}
+    if(inn.strikerId===inn.nonStrikerId){alert('Striker and Non-Striker must be different players.');return false;}
     return true;
   };
   const completeMatch=()=>{
@@ -802,8 +803,8 @@ async function teamLiveScoringPage(user,team,preferredMatchId=''){
     <div class="ct-extra-buttons"><button class="ct-scoring-action" data-extra="wd">WIDE</button><button class="ct-scoring-action" data-extra="nb">NO BALL</button><button class="ct-scoring-action" data-extra="b">BYE</button><button class="ct-scoring-action" data-extra="lb">LEG BYE</button></div><div id="extrasLine" class="ct-extras-line"></div>
     <div id="liveRecent" class="ct-recent-balls"></div><div class="ct-live-tools"><button id="endInnings">END INNINGS</button><button id="showScorecard">PREMIUM SCORECARD</button></div><div id="scorecardPanel" class="ct-scorecard-panel premium"><div class="ct-scorecard-head"><h3>CRICTRACK SCORECARD</h3><span>Batting • Bowling • FOW • Partnerships • Overs</span></div><div id="scorecardBody"></div></div><div id="liveError" class="error"></div></section>`);
 
-  document.getElementById('strikerSelect').onchange=e=>{inn.strikerId=e.target.value;render();};
-  document.getElementById('nonStrikerSelect').onchange=e=>{inn.nonStrikerId=e.target.value;render();};
+  document.getElementById('strikerSelect').onchange=e=>{const v=e.target.value;if(v&&v===inn.nonStrikerId){alert('Striker and Non-Striker must be different players.');render();return;}inn.strikerId=v;render();};
+  document.getElementById('nonStrikerSelect').onchange=e=>{const v=e.target.value;if(v&&v===inn.strikerId){alert('Striker and Non-Striker must be different players.');render();return;}inn.nonStrikerId=v;render();};
   document.getElementById('bowlerSelect').onchange=e=>{inn.bowlerId=e.target.value;render();};
 
   document.querySelectorAll('[data-run]').forEach(b=>b.onclick=async()=>{

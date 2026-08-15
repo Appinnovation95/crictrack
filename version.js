@@ -1,1 +1,1 @@
-window.CRICTRACK_VERSION='5.3.1';
+window.CRICTRACK_VERSION='5.3.2';

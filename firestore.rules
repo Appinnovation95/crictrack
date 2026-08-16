@@ -37,6 +37,15 @@ service cloud.firestore {
         && get(userPath()).data.status == 'active';
     }
 
+
+    function isTournamentScorer(tournamentId) {
+      return isSignedIn()
+        && exists(userPath())
+        && get(userPath()).data.role == 'scorer'
+        && get(userPath()).data.tournamentId == tournamentId
+        && get(userPath()).data.status == 'active';
+    }
+
     match /admins/{adminId} {
       allow get: if isSignedIn()
         && request.auth.uid == adminId
@@ -74,9 +83,27 @@ service cloud.firestore {
           && request.resource.data.tournamentId.size() <= 20
           && getAfter(/databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)).data.authUid == request.auth.uid
           && getAfter(/databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)).data.tournamentId == request.resource.data.tournamentId
+        )
+        || (
+          isSignedIn()
+          && request.resource.data.uid == userId
+          && request.resource.data.role == 'scorer'
+          && request.resource.data.status == 'active'
+          && request.resource.data.tournamentId is string
+          && request.resource.data.createdBy == request.auth.uid
+          && isTournamentOwner(request.resource.data.tournamentId)
         );
 
-      allow update, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin()
+        || (
+          resource.data.role == 'scorer'
+          && resource.data.tournamentId is string
+          && isTournamentOwner(resource.data.tournamentId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.tournamentId == resource.data.tournamentId
+        );
+      allow delete: if isSuperAdmin();
     }
 
     match /teams/{teamId} {
@@ -183,7 +210,7 @@ service cloud.firestore {
     }
 
     match /tournaments/{tournamentId} {
-      allow get: if resource == null || isSuperAdmin() || isTournamentOwner(tournamentId);
+      allow get: if resource == null || isSuperAdmin() || isTournamentOwner(tournamentId) || isTournamentScorer(tournamentId);
       allow list: if isSuperAdmin();
 
       allow create: if isSuperAdmin()
@@ -225,16 +252,63 @@ service cloud.firestore {
       // Explicit owner-only collections are pre-authorized for the planned tournament phases
       // so normal feature patches do not require a Rules publish every time.
       match /fixtures/{fixtureId} {
-        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+        allow get, list: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (isTournamentScorer(tournamentId) && resource.data.assignedScorerUid == request.auth.uid);
+        allow create, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+        allow update: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (
+            isTournamentScorer(tournamentId)
+            && resource.data.assignedScorerUid == request.auth.uid
+            && request.resource.data.assignedScorerUid == resource.data.assignedScorerUid
+            && request.resource.data.teamAId == resource.data.teamAId
+            && request.resource.data.teamBId == resource.data.teamBId
+          );
       }
       match /results/{resultId} {
-        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+        allow get: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (
+            isTournamentScorer(tournamentId)
+            && resource.data.liveMatchId is string
+            && get(/databases/$(database)/documents/tournaments/$(tournamentId)/matches/$(resource.data.liveMatchId)).data.assignedScorerUid == request.auth.uid
+          );
+        allow list: if isSuperAdmin() || isTournamentOwner(tournamentId) || isTournamentScorer(tournamentId);
+        allow create: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (
+            isTournamentScorer(tournamentId)
+            && request.resource.data.liveMatchId is string
+            && get(/databases/$(database)/documents/tournaments/$(tournamentId)/matches/$(request.resource.data.liveMatchId)).data.assignedScorerUid == request.auth.uid
+          );
+        allow update: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (
+            isTournamentScorer(tournamentId)
+            && request.resource.data.liveMatchId is string
+            && get(/databases/$(database)/documents/tournaments/$(tournamentId)/matches/$(request.resource.data.liveMatchId)).data.assignedScorerUid == request.auth.uid
+          );
+        allow delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
       }
       match /pointsTable/{rowId} {
         allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
       }
       match /matches/{matchId} {
-        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+        allow get, list: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (isTournamentScorer(tournamentId) && resource.data.assignedScorerUid == request.auth.uid);
+        allow create: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (
+            isTournamentScorer(tournamentId)
+            && request.resource.data.assignedScorerUid == request.auth.uid
+            && request.resource.data.fixtureId is string
+            && get(/databases/$(database)/documents/tournaments/$(tournamentId)/fixtures/$(request.resource.data.fixtureId)).data.assignedScorerUid == request.auth.uid
+          );
+        allow update: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (
+            isTournamentScorer(tournamentId)
+            && resource.data.assignedScorerUid == request.auth.uid
+            && request.resource.data.assignedScorerUid == resource.data.assignedScorerUid
+            && request.resource.data.fixtureId == resource.data.fixtureId
+            && request.resource.data.teamAId == resource.data.teamAId
+            && request.resource.data.teamBId == resource.data.teamBId
+          );
+        allow delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
       }
       match /knockouts/{nodeId} {
         allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
@@ -291,11 +365,19 @@ service cloud.firestore {
 
       // v4.3.0 Tournament team registration workspace
       match /registeredTeams/{registrationId} {
-        allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+        allow get, list: if isSuperAdmin() || isTournamentOwner(tournamentId) || isTournamentScorer(tournamentId);
+        allow create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
 
         match /players/{playerId} {
-          allow get, list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
+          allow get, list: if isSuperAdmin() || isTournamentOwner(tournamentId) || isTournamentScorer(tournamentId);
+          allow create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
         }
+      }
+
+      match /scorers/{scorerUid} {
+        allow get: if isSuperAdmin() || isTournamentOwner(tournamentId)
+          || (isTournamentScorer(tournamentId) && request.auth.uid == scorerUid);
+        allow list, create, update, delete: if isSuperAdmin() || isTournamentOwner(tournamentId);
       }
     }
 
